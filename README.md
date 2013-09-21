@@ -14,4 +14,4 @@ Copyright (c) 2013 bitdewy@gmail.com
 Distributed under the Boost Software License, Version 1.0, unless otherwise noted.
 (See accompanying file [LICENSE_1_0.txt](LICENSE_1_0.txt) or copy at [http://www.boost.org/LICENSE_1_0.txt](http://www.boost.org/LICENSE_1_0.txt))
 
-**Note: Exclusive Google cpplint.py**
+**Note: Excluding Google cpplint.py**
