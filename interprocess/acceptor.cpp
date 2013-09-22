@@ -124,7 +124,7 @@ void Acceptor::LinstenInThread() {
       case WAIT_IO_COMPLETION:
         break;
 
-        // An error occurred in the wait function.
+      // An error occurred in the wait function.
       default:
         auto msg = std::string("Unexpected error GLE = ");
         msg.append(std::to_string(GetLastError()));
@@ -135,6 +135,7 @@ void Acceptor::LinstenInThread() {
   } catch(...) {
     eptr = std::current_exception();
   }
+
   if (exception_callback_) {
     exception_callback_(eptr);
   }
@@ -175,19 +176,19 @@ bool Acceptor::CreateConnectInstance() {
   }
 
   switch (GetLastError()) {
-    // The overlapped connection in progress.
+  // The overlapped connection in progress.
   case ERROR_IO_PENDING:
     pendding = true;
     break;
 
-    // Client is already connected, so signal an event.
+  // Client is already connected, so signal an event.
   case ERROR_PIPE_CONNECTED:
     if (SetEvent(connect_overlap_.hEvent)) {
       break;
     }
     // jump to default
 
-    // If an error occurs during the connect operation...
+  // If an error occurs during the connect operation...
   default:
     auto msg = std::string("ConnectNamedPipe failed GLE = ");
     msg.append(std::to_string(GetLastError()));

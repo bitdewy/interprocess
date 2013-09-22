@@ -17,18 +17,11 @@ void OnMessage(
   conn->Send(msg);
 }
 
-void InThread() {
-  auto i = 0;
-  while (i++ < 20) {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-  }
-}
-
 int main() {
   interprocess::Server server("mynamedpipe");
   server.SetMessageCallback(OnMessage);
   server.Listen();
-  std::thread(InThread).join();
+  std::this_thread::sleep_for(std::chrono::seconds(30));
   server.Stop();
   return 0;
 }

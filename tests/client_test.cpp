@@ -17,18 +17,26 @@ void OnMessage(
   printf("[%d]: %d\n", i++, m);
 }
 
+void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
+  try {
+    if (eptr != std::exception_ptr()) {
+      std::rethrow_exception(eptr);
+    } else {
+      c->Connection()->Send(c->Name());
+    }
+  } catch (const std::exception& e) {
+    printf("Caught exception \"%s\n", e.what());
+  }
+}
+
 void InThread() {
   auto name = std::to_string(std::this_thread::get_id().hash());
   auto client = interprocess::Client(name);
   client.SetMessageCallback(OnMessage);
+  client.SetExceptionCallback(
+    std::bind(OnException, &client, std::placeholders::_1));
   client.Connect("mynamedpipe");
-  int i = 0;
-  while (i++ < 10) {
-    if (client.Connection()) {
-      client.Connection()->Send(name);
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-  }
+  std::this_thread::sleep_for(std::chrono::seconds(10));
   client.Stop();
 }
 

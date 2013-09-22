@@ -139,6 +139,7 @@ void Connector::ConnectInThread() {
   } catch (...) {
     eptr = std::current_exception();
   }
+
   if (exception_callback_) {
     exception_callback_(eptr);
   }
