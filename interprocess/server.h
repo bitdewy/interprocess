@@ -20,6 +20,7 @@ class Server : public noncopyable {
   void Listen();
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void CloseConnection(const std::string& name);
 
  private:

@@ -23,6 +23,7 @@ class Acceptor : public noncopyable {
   void Listen();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
 
  private:
@@ -35,6 +36,7 @@ class Acceptor : public noncopyable {
   HANDLE close_event_;
   OVERLAPPED connect_overlap_;
   NewConnectionCallback new_connection_callback_;
+  ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
 };
 

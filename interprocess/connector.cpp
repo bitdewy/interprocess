@@ -40,6 +40,10 @@ void Connector::SetNewConnectionCallback(const NewConnectionCallback& cb) {
   new_connection_callback_ = cb;
 }
 
+void Connector::SetExceptionCallback(const ExceptionCallback& cb) {
+  exception_callback_ = cb;
+}
+
 void Connector::MoveIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
@@ -69,9 +73,9 @@ void Connector::ConnectInThread() {
       assert(false);
     }
 
-    // All pipe instances are busy, so wait for 20 seconds.
+    // All pipe instances are busy, so wait for a while.
     if (!WaitNamedPipe(pipe_name_.c_str(), kTimeout)) {
-      printf("Could not open pipe: 20 second wait timed out.");
+      printf("Could not open pipe: wait timed out.");
       assert(false);
     }
   }
@@ -79,8 +83,8 @@ void Connector::ConnectInThread() {
   // The pipe connected; change to message-read mode.
   DWORD mode = PIPE_READMODE_MESSAGE;
   auto success = SetNamedPipeHandleState(
-    pipe,    // pipe handle
-    &mode,  // new pipe mode
+    pipe,     // pipe handle
+    &mode,    // new pipe mode
     NULL,     // don't set maximum bytes
     NULL);    // don't set maximum time
   if (!success) {

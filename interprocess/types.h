@@ -7,6 +7,7 @@
 #ifndef INTERPROCESS_TYPES_H_
 #define INTERPROCESS_TYPES_H_
 
+#include <exception>
 #include <functional>
 #include <memory>
 #include <string>
@@ -65,6 +66,24 @@ typedef std::function<void(const ConnectionPtr&)> CloseCallback;
 
 typedef
 std::function<void(const ConnectionPtr&, const std::string&)> MessageCallback;
+
+class ConnectionExcepton : public std::exception
+{
+ public:
+  explicit ConnectionExcepton(const char* what_arg)
+    : exception(what_arg) {}
+
+  explicit ConnectionExcepton(const std::string& what_arg)
+    : exception(what_arg.c_str()) {}
+
+  virtual const char* what() const {
+    return exception::what();
+  }
+};
+
+typedef
+std::function<void(const ConnectionPtr&, const std::exception_ptr&)>
+ExceptionCallback;
 
 static const int kTimeout = 5000;
 

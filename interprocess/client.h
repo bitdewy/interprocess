@@ -21,6 +21,7 @@ class Client : public noncopyable {
   std::string Name() const;
   ConnectionPtr Connection();
   void SetMessageCallback(const MessageCallback& callback);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void Stop();
 
  private:

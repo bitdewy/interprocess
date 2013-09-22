@@ -23,6 +23,7 @@ class Server::Impl {
   void Listen();
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void CloseConnection(const std::string& name);
 
  private:
@@ -34,6 +35,7 @@ class Server::Impl {
   std::unique_ptr<Acceptor> acceptor_;
   std::string name_;
   MessageCallback message_callback_;
+  ExceptionCallback exception_callback_;
 };
 
 // real implement of Server
@@ -60,6 +62,10 @@ void Server::Impl::Stop() {
 
 void Server::Impl::SetMessageCallback(const MessageCallback& cb) {
   message_callback_ = cb;
+}
+
+void Server::Impl::SetExceptionCallback(const ExceptionCallback& cb) {
+  exception_callback_ = cb;
 }
 
 void Server::Impl::CloseConnection(const std::string& name) {
@@ -119,6 +125,10 @@ void Server::Stop() {
 
 void Server::SetMessageCallback(const MessageCallback& cb) {
   impl_->SetMessageCallback(cb);
+}
+
+void Server::SetExceptionCallback(const ExceptionCallback& cb) {
+  impl_->SetExceptionCallback(cb);
 }
 
 void Server::CloseConnection(const std::string& name) {

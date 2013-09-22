@@ -22,6 +22,7 @@ class Connector : public noncopyable {
   void Start();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
 
  private:
@@ -32,6 +33,7 @@ class Connector : public noncopyable {
   HANDLE write_event_;
   HANDLE close_event_;
   NewConnectionCallback new_connection_callback_;
+  ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
 };
 

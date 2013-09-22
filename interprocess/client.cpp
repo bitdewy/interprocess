@@ -22,6 +22,7 @@ class Client::Impl {
   std::string Name() const;
   ConnectionPtr Connection();
   void SetMessageCallback(const MessageCallback& cb);
+  void SetExceptionCallback(const ExceptionCallback& cb);
   void Stop();
 
  private:
@@ -33,6 +34,7 @@ class Client::Impl {
   std::unique_ptr<Connector> connector_;
   std::string name_;
   MessageCallback message_callback_;
+  ExceptionCallback exception_callback_;
 };
 
 // real implement of Client
@@ -63,6 +65,10 @@ ConnectionPtr Client::Impl::Connection() {
 
 void Client::Impl::SetMessageCallback(const MessageCallback& cb) {
   message_callback_ = cb;
+}
+
+void Client::Impl::SetExceptionCallback(const ExceptionCallback& cb) {
+  exception_callback_ = cb;
 }
 
 void Client::Impl::Stop() {
@@ -111,6 +117,10 @@ ConnectionPtr Client::Connection() {
 
 void Client::SetMessageCallback(const MessageCallback& cb) {
   impl_->SetMessageCallback(cb);
+}
+
+void Client::SetExceptionCallback(const ExceptionCallback& cb) {
+  impl_->SetExceptionCallback(cb);
 }
 
 void Client::Stop() {

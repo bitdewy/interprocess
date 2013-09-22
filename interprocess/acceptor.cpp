@@ -41,6 +41,10 @@ void Acceptor::SetNewConnectionCallback(const NewConnectionCallback& cb) {
   new_connection_callback_ = cb;
 }
 
+void Acceptor::SetExceptionCallback(const ExceptionCallback& cb) {
+  exception_callback_ = cb;
+}
+
 void Acceptor::MoveIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
@@ -92,12 +96,12 @@ void Acceptor::LinstenInThread() {
         }
       }
       if (new_connection_callback_) {
-        // Use the pipe complete the write(read)complete routine
         new_connection_callback_(next_pipe_, write_event);
       }
       pedding = CreateConnectInstance();
       break;
-      // Send operation pendding
+
+    // Send operation pendding
     case WAIT_OBJECT_0 + 1:
       if (async_io_callback_) {
         async_io_callback_();
@@ -107,9 +111,9 @@ void Acceptor::LinstenInThread() {
     case WAIT_OBJECT_0 + 2:
       return;
 
-      // The wait is satisfied by a completed read or write
-      // operation. This allows the system to execute the
-      // completion routine.
+    // The wait is satisfied by a completed read or write
+    // operation. This allows the system to execute the
+    // completion routine.
     case WAIT_IO_COMPLETION:
       break;
 
