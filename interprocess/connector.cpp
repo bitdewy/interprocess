@@ -50,6 +50,7 @@ void Connector::MoveIOFunctionToAlertableThread(
 }
 
 void Connector::ConnectInThread() {
+  std::exception_ptr eptr;
   try {
     HANDLE pipe = INVALID_HANDLE_VALUE;
     while (1) {
@@ -72,13 +73,15 @@ void Connector::ConnectInThread() {
       if (GetLastError() != ERROR_PIPE_BUSY) {
         auto msg = std::string("Could not open pipe. GLE = ");
         msg.append(std::to_string(GetLastError()));
-        std::make_exception_ptr(ConnectionExcepton(msg));
+        std::rethrow_exception(
+          std::make_exception_ptr(ConnectionExcepton(msg)));
       }
 
       // All pipe instances are busy, so wait for a while.
       if (!WaitNamedPipe(pipe_name_.c_str(), kTimeout)) {
         auto msg = std::string("Could not open pipe: wait timed out.");
-        std::make_exception_ptr(ConnectionExcepton(msg));
+        std::rethrow_exception(
+          std::make_exception_ptr(ConnectionExcepton(msg)));
       }
     }
 
@@ -92,7 +95,8 @@ void Connector::ConnectInThread() {
     if (!success) {
       auto msg = std::string("SetNamedPipeHandleState failed. GLE = ");
       msg.append(std::to_string(GetLastError()));
-      std::make_exception_ptr(ConnectionExcepton(msg));
+      std::rethrow_exception(
+          std::make_exception_ptr(ConnectionExcepton(msg)));
     }
     if (new_connection_callback_) {
       new_connection_callback_(pipe, write_event_);
@@ -128,11 +132,15 @@ void Connector::ConnectInThread() {
       default:
         auto msg = std::string("Unexpected error GLE = ");
         msg.append(std::to_string(GetLastError()));
-        std::make_exception_ptr(ConnectionExcepton(msg));
+        std::rethrow_exception(
+          std::make_exception_ptr(ConnectionExcepton(msg)));
       }
     }
   } catch (...) {
-    // TODO(bitdewy): pass exception out of current thread
+    eptr = std::current_exception();
+  }
+  if (exception_callback_) {
+    exception_callback_(eptr);
   }
 }
 

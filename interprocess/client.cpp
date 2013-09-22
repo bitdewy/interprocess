@@ -50,6 +50,7 @@ void Client::Impl::Connect(const std::string& server_name) {
   connector_.reset(new Connector(server_name));
   connector_->SetNewConnectionCallback(
     std::bind(&Client::Impl::NewConnection, this, _1, _2));
+  connector_->SetExceptionCallback(exception_callback_);
   connector_->MoveIOFunctionToAlertableThread(
     std::bind(&Client::Impl::SendInAlertableThread, this));
   connector_->Start();
@@ -84,6 +85,8 @@ void Client::Impl::NewConnection(HANDLE pipe, HANDLE write_event) {
   conn_->SetCloseCallback(
     std::bind(&Client::Impl::ResetConnection, this, _1));
   ConnectionAttorney::SetMessageCallback(conn_, message_callback_);
+  // FIXME: null std::exception_ptr means connected
+  exception_callback_(std::exception_ptr());
 }
 
 void Client::Impl::ResetConnection(const ConnectionPtr& conn) {

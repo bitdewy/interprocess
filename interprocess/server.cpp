@@ -51,6 +51,7 @@ void Server::Impl::Listen() {
   using std::placeholders::_2;
   acceptor_->SetNewConnectionCallback(
     std::bind(&Server::Impl::NewConnection, this, _1, _2));
+  acceptor_->SetExceptionCallback(exception_callback_);
   acceptor_->MoveIOFunctionToAlertableThread(
     std::bind(&Server::Impl::SendInAlertableThread, this));
   acceptor_->Listen();

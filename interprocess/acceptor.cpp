@@ -51,6 +51,7 @@ void Acceptor::MoveIOFunctionToAlertableThread(
 
 
 void Acceptor::LinstenInThread() {
+  std::exception_ptr eptr;
   try {
     HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
     ScopeGuard auto_release_conn_event([&] { CloseHandle(conn_event); });
@@ -58,7 +59,8 @@ void Acceptor::LinstenInThread() {
       auto_release_conn_event.Dismiss();
       auto msg = std::string("CreateEvent (connect event) failed GLE = ");
       msg.append(std::to_string(GetLastError()));
-      std::make_exception_ptr(ConnectionExcepton(msg));
+      std::rethrow_exception(
+        std::make_exception_ptr(ConnectionExcepton(msg)));
     }
     HANDLE write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
     ScopeGuard auto_release_write_event([&] { CloseHandle(write_event); });
@@ -66,7 +68,8 @@ void Acceptor::LinstenInThread() {
       auto_release_write_event.Dismiss();
       auto msg = std::string("CreateEvent (write event) failed GLE = ");
       msg.append(std::to_string(GetLastError()));
-      std::make_exception_ptr(ConnectionExcepton(msg));
+      std::rethrow_exception(
+        std::make_exception_ptr(ConnectionExcepton(msg)));
     }
 
     HANDLE events[3] = { conn_event, write_event, close_event_ };
@@ -95,7 +98,8 @@ void Acceptor::LinstenInThread() {
           if (!success) {
             auto msg = std::string("ConnectNamedPipe failed GLE = ");
             msg.append(std::to_string(GetLastError()));
-            std::make_exception_ptr(ConnectionExcepton(msg));
+            std::rethrow_exception(
+              std::make_exception_ptr(ConnectionExcepton(msg)));
           }
         }
         if (new_connection_callback_) {
@@ -124,11 +128,15 @@ void Acceptor::LinstenInThread() {
       default:
         auto msg = std::string("Unexpected error GLE = ");
         msg.append(std::to_string(GetLastError()));
-        std::make_exception_ptr(ConnectionExcepton(msg));
+        std::rethrow_exception(
+          std::make_exception_ptr(ConnectionExcepton(msg)));
       }
     }
   } catch(...) {
-    // TODO(bitdewy): pass exception out of current thread
+    eptr = std::current_exception();
+  }
+  if (exception_callback_) {
+    exception_callback_(eptr);
   }
 }
 
@@ -149,7 +157,8 @@ bool Acceptor::CreateConnectInstance() {
   if (next_pipe_ == INVALID_HANDLE_VALUE) {
     auto msg = std::string("CreateNamedPipe failed GLE = ");
     msg.append(std::to_string(GetLastError()));
-    std::make_exception_ptr(ConnectionExcepton(msg));
+    std::rethrow_exception(
+      std::make_exception_ptr(ConnectionExcepton(msg)));
   }
 
   bool pendding = false;
@@ -161,7 +170,8 @@ bool Acceptor::CreateConnectInstance() {
   if (connected) {
     auto msg = std::string("ConnectNamedPipe failed GLE = ");
     msg.append(std::to_string(GetLastError()));
-    std::make_exception_ptr(ConnectionExcepton(msg));
+    std::rethrow_exception(
+      std::make_exception_ptr(ConnectionExcepton(msg)));
   }
 
   switch (GetLastError()) {
@@ -181,7 +191,8 @@ bool Acceptor::CreateConnectInstance() {
   default:
     auto msg = std::string("ConnectNamedPipe failed GLE = ");
     msg.append(std::to_string(GetLastError()));
-    std::make_exception_ptr(ConnectionExcepton(msg));
+    std::rethrow_exception(
+      std::make_exception_ptr(ConnectionExcepton(msg)));
   }
   return pendding;
 }

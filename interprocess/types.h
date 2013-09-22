@@ -80,9 +80,7 @@ class ConnectionExcepton : public std::exception {
   }
 };
 
-typedef
-std::function<void(const ConnectionPtr&, const std::exception_ptr&)>
-ExceptionCallback;
+typedef std::function<void(const std::exception_ptr&)> ExceptionCallback;
 
 static const int kTimeout = 5000;
 
