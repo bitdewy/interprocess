@@ -7,3 +7,4 @@
 for /R %%s in (*.h,*.cpp) do ( 
   python cpplint\cpplint.py %%s 
 )
+PAUSE

@@ -67,8 +67,7 @@ typedef std::function<void(const ConnectionPtr&)> CloseCallback;
 typedef
 std::function<void(const ConnectionPtr&, const std::string&)> MessageCallback;
 
-class ConnectionExcepton : public std::exception
-{
+class ConnectionExcepton : public std::exception {
  public:
   explicit ConnectionExcepton(const char* what_arg)
     : exception(what_arg) {}

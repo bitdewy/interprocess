@@ -6,7 +6,6 @@
 
 #include "interprocess/acceptor.h"
 #include <windows.h>
-#include <cassert>
 #include <string>
 
 namespace interprocess {
@@ -52,76 +51,84 @@ void Acceptor::MoveIOFunctionToAlertableThread(
 
 
 void Acceptor::LinstenInThread() {
-  HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
-  ScopeGuard auto_release_conn_event([&] { CloseHandle(conn_event); });
-  if (conn_event == NULL) {
-    auto_release_conn_event.Dismiss();
-    printf("CreateEvent failed with %d.\n", GetLastError());
-    return;
-  }
-  HANDLE write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-  ScopeGuard auto_release_write_event([&] { CloseHandle(write_event); });
-  if (write_event == NULL) {
-    auto_release_write_event.Dismiss();
-    printf("CreateEvent failed with %d.\n", GetLastError());
-    return;
-  }
-
-  HANDLE events[3] = { conn_event, write_event, close_event_ };
-  connect_overlap_.hEvent = conn_event;
-  bool pedding = CreateConnectInstance();
-
-  for (;;) {
-    auto wait = WaitForMultipleObjectsEx(
-      3,
-      events,         // events object to wait for
-      FALSE,          // waits any one
-      INFINITE,       // waits indefinitely
-      TRUE);          // alertable wait enabled
-
-    switch (wait) {
-    case WAIT_OBJECT_0:
-      // If an operation is pending, get the result of the
-      // connect operation.
-      if (pedding) {
-        DWORD ret = 0;
-        auto success = GetOverlappedResult(
-          next_pipe_,         // pipe handle
-          &connect_overlap_,  // OVERLAPPED structure
-          &ret,               // bytes transferred
-          FALSE);             // does not wait
-        if (!success) {
-          printf("ConnectNamedPipe (%d)\n", GetLastError());
-          assert(false);
-        }
-      }
-      if (new_connection_callback_) {
-        new_connection_callback_(next_pipe_, write_event);
-      }
-      pedding = CreateConnectInstance();
-      break;
-
-    // Send operation pendding
-    case WAIT_OBJECT_0 + 1:
-      if (async_io_callback_) {
-        async_io_callback_();
-      }
-      break;
-
-    case WAIT_OBJECT_0 + 2:
-      return;
-
-    // The wait is satisfied by a completed read or write
-    // operation. This allows the system to execute the
-    // completion routine.
-    case WAIT_IO_COMPLETION:
-      break;
-
-      // An error occurred in the wait function.
-    default:
-      printf("ConnectionPtr::Wait() (%d)\n", GetLastError());
-      return;
+  try {
+    HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
+    ScopeGuard auto_release_conn_event([&] { CloseHandle(conn_event); });
+    if (conn_event == NULL) {
+      auto_release_conn_event.Dismiss();
+      auto msg = std::string("CreateEvent (connect event) failed GLE = ");
+      msg.append(std::to_string(GetLastError()));
+      std::make_exception_ptr(ConnectionExcepton(msg));
     }
+    HANDLE write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ScopeGuard auto_release_write_event([&] { CloseHandle(write_event); });
+    if (write_event == NULL) {
+      auto_release_write_event.Dismiss();
+      auto msg = std::string("CreateEvent (write event) failed GLE = ");
+      msg.append(std::to_string(GetLastError()));
+      std::make_exception_ptr(ConnectionExcepton(msg));
+    }
+
+    HANDLE events[3] = { conn_event, write_event, close_event_ };
+    connect_overlap_.hEvent = conn_event;
+    bool pedding = CreateConnectInstance();
+
+    for (;;) {
+      auto wait = WaitForMultipleObjectsEx(
+        3,
+        events,         // events object to wait for
+        FALSE,          // waits any one
+        INFINITE,       // waits indefinitely
+        TRUE);          // alertable wait enabled
+
+      switch (wait) {
+      case WAIT_OBJECT_0:
+        // If an operation is pending, get the result of the
+        // connect operation.
+        if (pedding) {
+          DWORD ret = 0;
+          auto success = GetOverlappedResult(
+            next_pipe_,         // pipe handle
+            &connect_overlap_,  // OVERLAPPED structure
+            &ret,               // bytes transferred
+            FALSE);             // does not wait
+          if (!success) {
+            auto msg = std::string("ConnectNamedPipe failed GLE = ");
+            msg.append(std::to_string(GetLastError()));
+            std::make_exception_ptr(ConnectionExcepton(msg));
+          }
+        }
+        if (new_connection_callback_) {
+          new_connection_callback_(next_pipe_, write_event);
+        }
+        pedding = CreateConnectInstance();
+        break;
+
+      // Send operation pendding
+      case WAIT_OBJECT_0 + 1:
+        if (async_io_callback_) {
+          async_io_callback_();
+        }
+        break;
+
+      case WAIT_OBJECT_0 + 2:
+        return;
+
+      // The wait is satisfied by a completed read or write
+      // operation. This allows the system to execute the
+      // completion routine.
+      case WAIT_IO_COMPLETION:
+        break;
+
+        // An error occurred in the wait function.
+      default:
+        auto msg = std::string("Unexpected error GLE = ");
+        msg.append(std::to_string(GetLastError()));
+        std::make_exception_ptr(ConnectionExcepton(msg));
+      }
+    }
+  } catch(...) {
+    // TODO(bitdewy): pass exception out of current thread
   }
 }
 
@@ -140,8 +147,9 @@ bool Acceptor::CreateConnectInstance() {
     NULL);                     // default security attributes
 
   if (next_pipe_ == INVALID_HANDLE_VALUE) {
-    printf("CreateNamedPipe failed with %d.\n", GetLastError());
-    assert(false);
+    auto msg = std::string("CreateNamedPipe failed GLE = ");
+    msg.append(std::to_string(GetLastError()));
+    std::make_exception_ptr(ConnectionExcepton(msg));
   }
 
   bool pendding = false;
@@ -151,8 +159,9 @@ bool Acceptor::CreateConnectInstance() {
 
   // Overlapped ConnectNamedPipe should return zero.
   if (connected) {
-    printf("ConnectNamedPipe failed with %d.\n", GetLastError());
-    assert(false);
+    auto msg = std::string("ConnectNamedPipe failed GLE = ");
+    msg.append(std::to_string(GetLastError()));
+    std::make_exception_ptr(ConnectionExcepton(msg));
   }
 
   switch (GetLastError()) {
@@ -170,8 +179,9 @@ bool Acceptor::CreateConnectInstance() {
 
     // If an error occurs during the connect operation...
   default:
-    printf("ConnectNamedPipe failed with %d.\n", GetLastError());
-    assert(false);
+    auto msg = std::string("ConnectNamedPipe failed GLE = ");
+    msg.append(std::to_string(GetLastError()));
+    std::make_exception_ptr(ConnectionExcepton(msg));
   }
   return pendding;
 }
