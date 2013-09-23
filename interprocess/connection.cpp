@@ -41,6 +41,7 @@ VOID WINAPI CompletedWriteRoutine(
   auto self = context->self;
   if (err == ERROR_OPERATION_ABORTED) {
     SetEvent(self->cancel_io_event_);
+    assert(false);
     return;
   }
   bool io = false;
@@ -48,10 +49,20 @@ VOID WINAPI CompletedWriteRoutine(
   // there is no error).
 
   if ((err == 0) && (written == self->write_size_)) {
-    std::unique_lock<std::mutex> lock(self->sending_queue_mutex_);
-    bool e = self->sending_queue_.empty();
-    io = e ? self->AsyncRead() : self->AsyncWrite();
-    self->state_ = e ? Connection::CONNECTED : Connection::SEND_PENDDING;
+    std::string message;
+    {
+      std::unique_lock<std::mutex> lock(self->sending_queue_mutex_);
+      bool e = self->sending_queue_.empty();
+      if (e) {
+        self->state_ = Connection::CONNECTED;
+        io = self->AsyncRead();
+      } else {
+        self->state_ = Connection::SEND_PENDDING;
+        message = self->sending_queue_.back();
+        self->sending_queue_.pop_back();
+        io = self->AsyncWrite(message);
+      }
+    }
   }
 
   if (!io) {
@@ -140,6 +151,10 @@ bool Connection::AsyncWrite() {
     message = sending_queue_.back();
     sending_queue_.pop_back();
   }
+  return AsyncWrite(message);
+}
+
+bool Connection::AsyncWrite(const std::string& message) {
   write_size_ = message.size();
 #pragma warning(disable:4996)
   // already checked message length when push it into sendding queue

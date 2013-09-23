@@ -13,8 +13,7 @@
 void OnMessage(
   const interprocess::ConnectionPtr& conn, const std::string& msg) {
   static int i = 0;
-  int m = static_cast<int>(std::stoll(msg));
-  printf("[%d]: %d\n", i++, m);
+  printf("[%d]: %s\n", i++, msg.c_str());
 }
 
 void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
@@ -23,9 +22,10 @@ void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
       std::rethrow_exception(eptr);
     } else {
       c->Connection()->Send(c->Name());
+      c->Connection()->Send("abcdefghijklmnopqrstuvwxyz");
     }
   } catch (const std::exception& e) {
-    printf("Caught exception \"%s\n", e.what());
+    printf("Caught exception \"%s\"\n", e.what());
   }
 }
 
@@ -41,7 +41,7 @@ void InThread() {
 }
 
 int main() {
-  std::thread threads[20];
+  std::thread threads[1];
   for (auto i = 0; i < sizeof threads / sizeof threads[0]; ++i) {
     threads[i].swap(std::thread(InThread));
   }

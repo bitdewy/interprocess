@@ -12,8 +12,7 @@
 void OnMessage(
   const interprocess::ConnectionPtr& conn, const std::string& msg) {
   static int i = 0;
-  int m = static_cast<int>(std::stoll(msg));
-  printf("[%d]: %d\n", i++, m);
+  printf("[%d]: %s\n", i++, msg.c_str());
   conn->Send(msg);
 }
 

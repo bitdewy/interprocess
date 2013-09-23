@@ -37,7 +37,7 @@ class Connection : public noncopyable,
   HANDLE Handle() const;
   bool AsyncRead();
   bool AsyncWrite();
-
+  bool AsyncWrite(const std::string& message);
   typedef std::vector<std::string> SendingQueue;
   struct IoCompletionRoutine {
     OVERLAPPED overlap;
