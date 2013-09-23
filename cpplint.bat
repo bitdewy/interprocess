@@ -4,7 +4,8 @@
 ::
 ::  http://www.boost.org/LICENSE_1_0.txt
 
+@echo off
 for /R %%s in (*.h,*.cpp) do ( 
   python cpplint\cpplint.py %%s 
 )
-PAUSE
+pause

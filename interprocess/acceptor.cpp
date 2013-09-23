@@ -80,8 +80,8 @@ void Acceptor::LinstenInThread() {
       auto wait = WaitForMultipleObjectsEx(
         3,
         events,         // events object to wait for
-        FALSE,          // waits any one
-        INFINITE,       // waits indefinitely
+        FALSE,          // wait any one
+        INFINITE,       // wait indefinitely
         TRUE);          // alertable wait enabled
 
       switch (wait) {

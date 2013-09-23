@@ -24,6 +24,7 @@ class Server::Impl {
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
+  void Broadcast(const std::string& message);
   void CloseConnection(const std::string& name);
 
  private:
@@ -69,11 +70,22 @@ void Server::Impl::SetExceptionCallback(const ExceptionCallback& cb) {
   exception_callback_ = cb;
 }
 
+void Server::Impl::Broadcast(const std::string& message) {
+  typedef std::pair<std::string, ConnectionPtr> ConnectionMapItem;
+  std::for_each(std::begin(connection_map_),
+                std::end(connection_map_),
+                [=](const ConnectionMapItem& pair) {
+    pair.second->Send(message);
+  });
+}
+
+
 void Server::Impl::CloseConnection(const std::string& name) {
+  typedef std::pair<std::string, ConnectionPtr> ConnectionMapItem;
   auto it = std::find_if(std::begin(connection_map_),
-    std::end(connection_map_),
-    [=](const std::pair<std::string, ConnectionPtr>& pair) {
-      return name == pair.first;
+                         std::end(connection_map_),
+                         [=](const ConnectionMapItem& pair) {
+    return name == pair.first;
   });
   if (it != std::end(connection_map_)) {
     it->second->Shutdown();

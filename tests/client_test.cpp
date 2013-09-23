@@ -18,7 +18,7 @@ void OnMessage(
 
 void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
   try {
-    if (eptr != std::exception_ptr()) {
+    if (eptr) {
       std::rethrow_exception(eptr);
     } else {
       c->Connection()->Send(c->Name());

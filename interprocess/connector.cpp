@@ -108,7 +108,7 @@ void Connector::ConnectInThread() {
       auto wait = WaitForMultipleObjectsEx(
         2,
         events,         // events object to wait for
-        FALSE,
+        FALSE,          // wait any one
         INFINITE,       // wait indefinitely
         TRUE);          // alertable wait enabled
 

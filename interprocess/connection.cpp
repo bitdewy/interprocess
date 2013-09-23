@@ -45,24 +45,23 @@ VOID WINAPI CompletedWriteRoutine(
     return;
   }
   bool io = false;
-  // The write operation has finished, so read the next request (if
-  // there is no error).
-
+  // The write operation has finished, so read() the next request (if
+  // there is no error) or continue write if necessary.
   if ((err == 0) && (written == self->write_size_)) {
+    bool pendding = false;
     std::string message;
     {
       std::unique_lock<std::mutex> lock(self->sending_queue_mutex_);
-      bool e = self->sending_queue_.empty();
-      if (e) {
-        self->state_ = Connection::CONNECTED;
-        io = self->AsyncRead();
-      } else {
-        self->state_ = Connection::SEND_PENDDING;
+      pendding = !self->sending_queue_.empty();
+      if (pendding) {
         message = self->sending_queue_.back();
         self->sending_queue_.pop_back();
-        io = self->AsyncWrite(message);
+        self->state_ = Connection::SEND_PENDDING;
+      } else {
+        self->state_ = Connection::CONNECTED;
       }
     }
+    io = pendding ? self->AsyncWrite(message) : self->AsyncRead();
   }
 
   if (!io) {
@@ -137,7 +136,7 @@ bool Connection::AsyncRead() {
 }
 
 bool Connection::AsyncWrite() {
-  // canceled must be read opration
+  // must cancel read operation first
   if (CancelIo(pipe_)) {
     auto h = cancel_io_event_;
     while (WAIT_OBJECT_0 != WaitForSingleObjectEx(h, INFINITE, TRUE)) {
