@@ -11,7 +11,7 @@
 #include <mutex>
 #include <memory>
 #include <string>
-#include <vector>
+#include <deque>
 #include "interprocess/types.h"
 
 namespace interprocess {
@@ -38,7 +38,7 @@ class Connection : public noncopyable,
   bool AsyncRead();
   bool AsyncWrite();
   bool AsyncWrite(const std::string& message);
-  typedef std::vector<std::string> SendingQueue;
+  typedef std::deque<std::string> SendingQueue;
   struct IoCompletionRoutine {
     OVERLAPPED overlap;
     Connection* self;

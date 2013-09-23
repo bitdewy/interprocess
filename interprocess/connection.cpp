@@ -54,8 +54,8 @@ VOID WINAPI CompletedWriteRoutine(
       std::unique_lock<std::mutex> lock(self->sending_queue_mutex_);
       pendding = !self->sending_queue_.empty();
       if (pendding) {
-        message = self->sending_queue_.back();
-        self->sending_queue_.pop_back();
+        message = self->sending_queue_.front();
+        self->sending_queue_.pop_front();
         self->state_ = Connection::SEND_PENDDING;
       } else {
         self->state_ = Connection::CONNECTED;
@@ -147,8 +147,8 @@ bool Connection::AsyncWrite() {
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
     assert(!sending_queue_.empty());
-    message = sending_queue_.back();
-    sending_queue_.pop_back();
+    message = sending_queue_.front();
+    sending_queue_.pop_front();
   }
   return AsyncWrite(message);
 }
