@@ -27,7 +27,7 @@ class Acceptor : public noncopyable {
   void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
 
  private:
-  void LinstenInThread();
+  void ListenInThread();
   bool CreateConnectInstance();
 
   const std::string pipe_name_;

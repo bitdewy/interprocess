@@ -25,7 +25,7 @@ Acceptor::~Acceptor() {
 
 void Acceptor::Listen() {
   listen_thread_.swap(
-    std::thread(std::bind(&Acceptor::LinstenInThread, this)));
+    std::thread(std::bind(&Acceptor::ListenInThread, this)));
 }
 
 void Acceptor::Stop() {
@@ -50,7 +50,7 @@ void Acceptor::MoveIOFunctionToAlertableThread(
 }
 
 
-void Acceptor::LinstenInThread() {
+void Acceptor::ListenInThread() {
   std::exception_ptr eptr;
   try {
     HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
@@ -74,7 +74,7 @@ void Acceptor::LinstenInThread() {
 
     HANDLE events[3] = { conn_event, write_event, close_event_ };
     connect_overlap_.hEvent = conn_event;
-    bool pedding = CreateConnectInstance();
+    bool pendding = CreateConnectInstance();
 
     for (;;) {
       auto wait = WaitForMultipleObjectsEx(
@@ -88,7 +88,7 @@ void Acceptor::LinstenInThread() {
       case WAIT_OBJECT_0:
         // If an operation is pending, get the result of the
         // connect operation.
-        if (pedding) {
+        if (pendding) {
           DWORD ret = 0;
           auto success = GetOverlappedResult(
             next_pipe_,         // pipe handle
@@ -105,7 +105,7 @@ void Acceptor::LinstenInThread() {
         if (new_connection_callback_) {
           new_connection_callback_(next_pipe_, write_event);
         }
-        pedding = CreateConnectInstance();
+        pendding = CreateConnectInstance();
         break;
 
       // Send operation pendding
