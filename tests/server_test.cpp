@@ -21,6 +21,7 @@ int main() {
   server.SetMessageCallback(OnMessage);
   server.Listen();
   std::this_thread::sleep_for(std::chrono::seconds(30));
+  server.Broadcast("0");
   server.Stop();
   return 0;
 }

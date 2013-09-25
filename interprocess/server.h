@@ -21,6 +21,7 @@ class Server : public noncopyable {
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
+  void Broadcast(const std::string& message);
   void CloseConnection(const std::string& name);
 
  private:

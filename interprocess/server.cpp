@@ -144,6 +144,10 @@ void Server::SetExceptionCallback(const ExceptionCallback& cb) {
   impl_->SetExceptionCallback(cb);
 }
 
+void Server::Broadcast(const std::string& message) {
+  impl_->Broadcast(message);
+}
+
 void Server::CloseConnection(const std::string& name) {
   impl_->CloseConnection(name);
 }

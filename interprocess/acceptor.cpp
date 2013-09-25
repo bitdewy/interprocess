@@ -132,7 +132,7 @@ void Acceptor::ListenInThread() {
           std::make_exception_ptr(ConnectionExcepton(msg)));
       }
     }
-  } catch(...) {
+  } catch (...) {
     eptr = std::current_exception();
   }
 
