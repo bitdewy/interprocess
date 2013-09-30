@@ -14,25 +14,25 @@ VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
 
 VOID WINAPI CompletedReadRoutine(
   DWORD err, DWORD readed, LPOVERLAPPED overlap) {
-    auto context = (Connection::IoCompletionRoutine*)overlap;
-    auto self = context->self;
+  auto context = (Connection::IoCompletionRoutine*)overlap;
+  auto self = context->self;
 
-    if (err == ERROR_OPERATION_ABORTED) {
-      SetEvent(self->cancel_io_event_);
-      return;
+  if (err == ERROR_OPERATION_ABORTED) {
+    SetEvent(self->cancel_io_event_);
+    return;
+  }
+  bool io = false;
+  if ((err == 0) && (readed != 0)) {
+    auto message = std::string(self->read_buf_, readed);
+    io = self->AsyncRead();
+    if (!message.empty()) {
+      self->message_callback_(self->shared_from_this(), message);
     }
-    bool io = false;
-    if ((err == 0) && (readed != 0)) {
-      auto message = std::string(self->read_buf_, readed);
-      io = self->AsyncRead();
-      if (!message.empty()) {
-        self->message_callback_(self->shared_from_this(), message);
-      }
-    }
+  }
 
-    if (!io) {
-      self->Shutdown();
-    }
+  if (!io) {
+    self->Shutdown();
+  }
 }
 
 VOID WINAPI CompletedWriteRoutine(
