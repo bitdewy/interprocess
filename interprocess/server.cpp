@@ -88,7 +88,7 @@ void Server::Impl::CloseConnection(const std::string& name) {
     return name == pair.first;
   });
   if (it != std::end(connection_map_)) {
-    it->second->Shutdown();
+    it->second->Close();
   }
 }
 

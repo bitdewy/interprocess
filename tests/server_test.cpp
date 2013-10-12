@@ -14,6 +14,7 @@ void OnMessage(
   static int i = 0;
   printf("[%d]: %s\n", i++, msg.c_str());
   conn->Send(msg);
+  conn->Close();
 }
 
 int main() {

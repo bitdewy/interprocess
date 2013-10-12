@@ -8,6 +8,7 @@
 #define INTERPROCESS_CONNECTION_H_
 
 #include <windows.h>
+#include <thread>
 #include <mutex>
 #include <memory>
 #include <string>
@@ -28,11 +29,12 @@ class Connection : public noncopyable,
   ~Connection();
   std::string Name() const;
   void Send(const std::string& message);
-  void Shutdown();
+  void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;
 
  private:
+  void Shutdown();
   void SetMessageCallback(const MessageCallback& cb);
   HANDLE Handle() const;
   bool AsyncRead();
@@ -57,6 +59,8 @@ class Connection : public noncopyable,
   std::mutex sending_queue_mutex_;
   SendingQueue sending_queue_;
   IoCompletionRoutine io_overlap_;
+  std::thread::id io_thread_id_;
+  bool disconnecting_;
 
   friend class ConnectionAttorney;
   friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);

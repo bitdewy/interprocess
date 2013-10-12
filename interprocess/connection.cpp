@@ -75,14 +75,15 @@ Connection::Connection(const std::string& name, HANDLE pipe, HANDLE event)
     pipe_(pipe),
     send_event_(event),
     cancel_io_event_(CreateEvent(NULL, FALSE, FALSE, NULL)),
-    write_size_(0) {
+    write_size_(0),
+    io_thread_id_(std::this_thread::get_id()),
+    disconnecting_(false) {
   ZeroMemory(read_buf_, sizeof read_buf_);
   ZeroMemory(write_buf_, sizeof write_buf_);
   ZeroMemory(&io_overlap_, sizeof io_overlap_);
   io_overlap_.self = this;
   AsyncRead();
 }
-
 
 Connection::~Connection() {
   CancelIo(pipe_);
@@ -104,8 +105,12 @@ void Connection::Send(const std::string& message) {
   SetEvent(send_event_);
 }
 
-void Connection::Shutdown() {
-  close_callback_(shared_from_this());
+void Connection::Close() {
+  if (std::this_thread::get_id() != io_thread_id_) {
+    Shutdown();
+  } else {
+    disconnecting_ = true;
+  }
 }
 
 void Connection::SetCloseCallback(const CloseCallback& cb) {
@@ -114,6 +119,10 @@ void Connection::SetCloseCallback(const CloseCallback& cb) {
 
 Connection::StateE Connection::State() const {
   return state_;
+}
+
+void Connection::Shutdown() {
+  close_callback_(shared_from_this());
 }
 
 void Connection::SetMessageCallback(const MessageCallback& cb) {
@@ -125,6 +134,9 @@ HANDLE Connection::Handle() const {
 }
 
 bool Connection::AsyncRead() {
+  if (disconnecting_ && sending_queue_.empty()) {
+    return false;
+  }
   ZeroMemory(read_buf_, sizeof read_buf_);
   auto read = ReadFileEx(
     pipe_,
