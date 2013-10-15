@@ -4,18 +4,15 @@
 //
 //  http://www.boost.org/LICENSE_1_0.txt
 
-#include "cppunittest.h"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include <cppunittest.h>
 
 namespace unittest {
 
 TEST_CLASS(UnitTest) {
  public:
   TEST_METHOD(TestMethod) {
-    // TODO: Your test code here
+    // TODO(bitdewy): test code here
   }
-
 };
 
 }  // namespace unittest
