@@ -17,12 +17,14 @@
 *.opensdf
 *.pd_
 
+vsproject/ipch/
 vsproject/Debug/
 vsproject/Release/
 vsproject/interprocess/Debug/
 vsproject/interprocess/Release/
-vsproject/tests/client/Release/
 vsproject/tests/server/Debug/
 vsproject/tests/server/Release/
 vsproject/tests/client/Debug/
-
+vsproject/tests/client/Release/
+vsproject/tests/unittest/Debug/
+vsproject/tests/unittest/Release/

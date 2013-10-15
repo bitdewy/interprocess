@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2012 for Windows Desktop
+# Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "interprocess", "interprocess\interprocess.vcxproj", "{7D7D356E-8407-4C4D-9CBB-7387B0B440BD}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "server", "tests\server\server.vcxproj", "{9BC8B4C4-AC46-4840-8B77-926FDA161FA4}"
@@ -12,6 +12,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "client", "tests\client\clie
 	ProjectSection(ProjectDependencies) = postProject
 		{7D7D356E-8407-4C4D-9CBB-7387B0B440BD} = {7D7D356E-8407-4C4D-9CBB-7387B0B440BD}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unittest", "tests\unittest\unittest.vcxproj", "{B503363D-269A-4FD5-8A69-BD3711328B76}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,10 @@ Global
 		{BD974CEC-D291-493E-9DE1-441EB04D5289}.Debug|Win32.Build.0 = Debug|Win32
 		{BD974CEC-D291-493E-9DE1-441EB04D5289}.Release|Win32.ActiveCfg = Release|Win32
 		{BD974CEC-D291-493E-9DE1-441EB04D5289}.Release|Win32.Build.0 = Release|Win32
+		{B503363D-269A-4FD5-8A69-BD3711328B76}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B503363D-269A-4FD5-8A69-BD3711328B76}.Debug|Win32.Build.0 = Debug|Win32
+		{B503363D-269A-4FD5-8A69-BD3711328B76}.Release|Win32.ActiveCfg = Release|Win32
+		{B503363D-269A-4FD5-8A69-BD3711328B76}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
