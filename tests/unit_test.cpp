@@ -5,13 +5,14 @@
 //  http://www.boost.org/LICENSE_1_0.txt
 
 #include <cppunittest.h>
+#include "interprocess/server.h"
 
 namespace unittest {
 
 TEST_CLASS(UnitTest) {
  public:
   TEST_METHOD(TestMethod) {
-    // TODO(bitdewy): test code here
+    interprocess::Server server("test");
   }
 };
 

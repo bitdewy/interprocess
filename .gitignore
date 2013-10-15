@@ -16,8 +16,10 @@
 *.suo
 *.opensdf
 *.pd_
+*.user
 
 vsproject/ipch/
+vsproject/TestResults/
 vsproject/Debug/
 vsproject/Release/
 vsproject/interprocess/Debug/
