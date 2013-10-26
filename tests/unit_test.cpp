@@ -53,7 +53,7 @@ TEST_CLASS(UnitTest) {
   TEST_METHOD(TestMethod) {
     using Microsoft::VisualStudio::CppUnitTestFramework::Logger;
     using Microsoft::VisualStudio::CppUnitTestFramework::Assert;
-    interprocess::Server server("test");
+    interprocess::Server server("server");
     Logger::WriteMessage("In TestMethod");
     Assert::AreEqual(0, 0);
   }
