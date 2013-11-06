@@ -23,14 +23,14 @@ TEST_MODULE_CLEANUP(ModuleCleanup) {
   Logger::WriteMessage("In Module Cleanup");
 }
 
-TEST_CLASS(UnitTest) {
+TEST_CLASS(ServerTest) {
  public:
-  UnitTest() {
+  ServerTest() {
     using Microsoft::VisualStudio::CppUnitTestFramework::Logger;
     Logger::WriteMessage("In TestClass");
   }
 
-  ~UnitTest() {
+  ~ServerTest() {
     using Microsoft::VisualStudio::CppUnitTestFramework::Logger;
     Logger::WriteMessage("In ~TestClass");
   }
@@ -45,12 +45,12 @@ TEST_CLASS(UnitTest) {
     Logger::WriteMessage("In Class Cleanup");
   }
 
-  BEGIN_TEST_METHOD_ATTRIBUTE(TestMethod)
-    TEST_OWNER(L"OwnerName")
+  BEGIN_TEST_METHOD_ATTRIBUTE(TestServerStart)
+    TEST_OWNER(L"Bitdewy")
     TEST_PRIORITY(1)
   END_TEST_METHOD_ATTRIBUTE()
 
-  TEST_METHOD(TestMethod) {
+  TEST_METHOD(TestServerStart) {
     using Microsoft::VisualStudio::CppUnitTestFramework::Logger;
     using Microsoft::VisualStudio::CppUnitTestFramework::Assert;
     interprocess::Server server("server");
