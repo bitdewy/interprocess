@@ -8,6 +8,7 @@
 #define INTERPROCESS_TYPES_H_
 
 #include <windows.h>
+#include <atomic>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -36,22 +37,22 @@ typedef noncopyable_::noncopyable noncopyable;
 
 class ScopeGuard : public noncopyable {
  public:
-  explicit ScopeGuard(std::function<void()> onExitScope)
-    : onExitScope_(onExitScope), dismissed_(false) {}
+  explicit ScopeGuard(std::function<void()> on_exit_scope)
+    : on_exit_scope_(on_exit_scope) {}
 
   ~ScopeGuard() {
     if (!dismissed_) {
-      onExitScope_();
+      on_exit_scope_();
     }
   }
 
-  void Dismiss() {
+  void Dismiss() const {
     dismissed_ = true;
   }
 
  private:
-  std::function<void()> onExitScope_;
-  bool dismissed_;
+  std::function<void()> on_exit_scope_;
+  mutable std::atomic_bool dismissed_;
 };
 
 #define _LINENAME_CAT(name, line) name##line
@@ -102,7 +103,7 @@ void raise_exception_if(Predicate pred) {
 }
 
 template<typename Predicate, typename ScopedGuard>
-void raise_exception_if(Predicate pred, ScopedGuard& guard) {
+void raise_exception_if(Predicate pred, const ScopedGuard& guard) {
   if (pred()) {
     guard.Dismiss();
     raise();

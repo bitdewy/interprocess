@@ -53,13 +53,13 @@ HANDLE Connector::CreateConnectionInstance() {
   HANDLE pipe = INVALID_HANDLE_VALUE;
   while (true) {
     pipe = CreateFile(
-      pipe_name_.c_str(),           // pipe name
-      GENERIC_READ | GENERIC_WRITE, // read and write access
-      0,                            // no sharing
-      NULL,                         // default security attributes
-      OPEN_EXISTING,                // opens existing pipe
-      FILE_FLAG_OVERLAPPED,         // default attributes
-      NULL);                        // no template file
+      pipe_name_.c_str(),            // pipe name
+      GENERIC_READ | GENERIC_WRITE,  // read and write access
+      0,                             // no sharing
+      NULL,                          // default security attributes
+      OPEN_EXISTING,                 // opens existing pipe
+      FILE_FLAG_OVERLAPPED,          // default attributes
+      NULL);                         // no template file
 
     // Break if the pipe handle is valid.
     if (pipe != INVALID_HANDLE_VALUE) {
