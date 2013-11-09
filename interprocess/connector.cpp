@@ -70,19 +70,12 @@ void Connector::ConnectInThread() {
       }
 
       // Exit if an error other than ERROR_PIPE_BUSY occurs.
-      if (GetLastError() != ERROR_PIPE_BUSY) {
-        auto msg = std::string("Could not open pipe. GLE = ");
-        msg.append(std::to_string(GetLastError()));
-        std::rethrow_exception(
-          std::make_exception_ptr(ConnectionExcepton(msg)));
-      }
+      raise_exception_if([]() { return GetLastError() != ERROR_PIPE_BUSY; });
 
       // All pipe instances are busy, so wait for a while.
-      if (!WaitNamedPipe(pipe_name_.c_str(), kTimeout)) {
-        auto msg = std::string("Could not open pipe: wait timed out.");
-        std::rethrow_exception(
-          std::make_exception_ptr(ConnectionExcepton(msg)));
-      }
+      raise_exception_if([this]() {
+        return !WaitNamedPipe(pipe_name_.c_str(), kTimeout);
+      });
     }
 
     // The pipe connected; change to message-read mode.
@@ -92,12 +85,8 @@ void Connector::ConnectInThread() {
       &mode,    // new pipe mode
       NULL,     // don't set maximum bytes
       NULL);    // don't set maximum time
-    if (!success) {
-      auto msg = std::string("SetNamedPipeHandleState failed. GLE = ");
-      msg.append(std::to_string(GetLastError()));
-      std::rethrow_exception(
-          std::make_exception_ptr(ConnectionExcepton(msg)));
-    }
+    raise_exception_if([&]() { return !success; });
+
     if (new_connection_callback_) {
       new_connection_callback_(pipe, write_event_);
     }
@@ -130,10 +119,7 @@ void Connector::ConnectInThread() {
 
       // An error occurred in the wait function.
       default:
-        auto msg = std::string("Unexpected error GLE = ");
-        msg.append(std::to_string(GetLastError()));
-        std::rethrow_exception(
-          std::make_exception_ptr(ConnectionExcepton(msg)));
+        raise_exception();
       }
     }
   } catch (...) {

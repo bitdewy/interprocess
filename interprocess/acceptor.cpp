@@ -95,12 +95,7 @@ void Acceptor::ListenInThread() {
             &connect_overlap_,  // OVERLAPPED structure
             &ret,               // bytes transferred
             FALSE);             // does not wait
-          if (!success) {
-            auto msg = std::string("ConnectNamedPipe failed GLE = ");
-            msg.append(std::to_string(GetLastError()));
-            std::rethrow_exception(
-              std::make_exception_ptr(ConnectionExcepton(msg)));
-          }
+          raise_exception_if([&]() { return !success;});
         }
         if (new_connection_callback_) {
           new_connection_callback_(next_pipe_, write_event);
@@ -126,10 +121,7 @@ void Acceptor::ListenInThread() {
 
       // An error occurred in the wait function.
       default:
-        auto msg = std::string("Unexpected error GLE = ");
-        msg.append(std::to_string(GetLastError()));
-        std::rethrow_exception(
-          std::make_exception_ptr(ConnectionExcepton(msg)));
+        raise_exception();
       }
     }
   } catch (...) {
@@ -155,12 +147,7 @@ bool Acceptor::CreateConnectInstance() {
     kTimeout,                  // client time-out
     NULL);                     // default security attributes
 
-  if (next_pipe_ == INVALID_HANDLE_VALUE) {
-    auto msg = std::string("CreateNamedPipe failed GLE = ");
-    msg.append(std::to_string(GetLastError()));
-    std::rethrow_exception(
-      std::make_exception_ptr(ConnectionExcepton(msg)));
-  }
+  raise_exception_if([this]() { return next_pipe_ == INVALID_HANDLE_VALUE; });
 
   bool pendding = false;
 
@@ -168,12 +155,7 @@ bool Acceptor::CreateConnectInstance() {
   auto connected = ConnectNamedPipe(next_pipe_, &connect_overlap_);
 
   // Overlapped ConnectNamedPipe should return zero.
-  if (connected) {
-    auto msg = std::string("ConnectNamedPipe failed GLE = ");
-    msg.append(std::to_string(GetLastError()));
-    std::rethrow_exception(
-      std::make_exception_ptr(ConnectionExcepton(msg)));
-  }
+  raise_exception_if([&]() { return connected; });
 
   switch (GetLastError()) {
   // The overlapped connection in progress.
@@ -190,10 +172,7 @@ bool Acceptor::CreateConnectInstance() {
 
   // If an error occurs during the connect operation...
   default:
-    auto msg = std::string("ConnectNamedPipe failed GLE = ");
-    msg.append(std::to_string(GetLastError()));
-    std::rethrow_exception(
-      std::make_exception_ptr(ConnectionExcepton(msg)));
+    raise_exception();
   }
   return pendding;
 }

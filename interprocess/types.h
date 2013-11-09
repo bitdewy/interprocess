@@ -7,6 +7,7 @@
 #ifndef INTERPROCESS_TYPES_H_
 #define INTERPROCESS_TYPES_H_
 
+#include <windows.h>
 #include <exception>
 #include <functional>
 #include <memory>
@@ -85,6 +86,20 @@ typedef std::function<void(const std::exception_ptr&)> ExceptionCallback;
 static const int kTimeout = 5000;
 
 static const int kBufferSize = 4096;
+
+template<class Predicate>
+void raise_exception_if(Predicate pred) {
+  if (pred()) {
+    auto msg = std::string("ConnectionExcepton GetLastError = ");
+    msg.append(std::to_string(GetLastError()));
+    std::rethrow_exception(
+      std::make_exception_ptr(ConnectionExcepton(msg)));
+  }
+}
+
+inline void raise_exception() {
+  raise_exception_if([]() { return true; });
+}
 
 }  // namespace interprocess
 

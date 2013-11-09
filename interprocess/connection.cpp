@@ -172,7 +172,7 @@ bool Connection::AsyncWrite(const std::string& message) {
   message.copy(std::begin(write_buf_), write_size_);
 #pragma warning(default:4996)
 
-  auto write =  WriteFileEx(
+  auto write = WriteFileEx(
     pipe_,
     write_buf_,
     write_size_,
