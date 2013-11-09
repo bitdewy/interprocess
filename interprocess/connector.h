@@ -26,6 +26,7 @@ class Connector : public noncopyable {
   void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
 
  private:
+  HANDLE CreateConnectionInstance();
   void ConnectInThread();
 
   std::string pipe_name_;

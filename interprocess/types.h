@@ -87,18 +87,51 @@ static const int kTimeout = 5000;
 
 static const int kBufferSize = 4096;
 
-template<class Predicate>
+inline void raise() {
+  auto msg = std::string("ConnectionExcepton GetLastError = ");
+  msg.append(std::to_string(GetLastError()));
+  std::rethrow_exception(
+    std::make_exception_ptr(ConnectionExcepton(msg)));
+}
+
+template<typename Predicate>
 void raise_exception_if(Predicate pred) {
   if (pred()) {
-    auto msg = std::string("ConnectionExcepton GetLastError = ");
-    msg.append(std::to_string(GetLastError()));
-    std::rethrow_exception(
-      std::make_exception_ptr(ConnectionExcepton(msg)));
+    raise();
+  }
+}
+
+template<typename Predicate, typename ScopedGuard>
+void raise_exception_if(Predicate pred, ScopedGuard& guard) {
+  if (pred()) {
+    guard.Dismiss();
+    raise();
   }
 }
 
 inline void raise_exception() {
   raise_exception_if([]() { return true; });
+}
+
+template <typename Function>
+inline void call_if_exist(Function f) {
+  if (f) {
+    f();
+  }
+}
+
+template <typename Function, typename Arg>
+inline void call_if_exist(Function f, Arg arg) {
+  if (f) {
+    f(arg);
+  }
+}
+
+template <typename Function, typename Arg1, typename Arg2>
+inline void call_if_exist(Function f, Arg1 arg1, Arg2 arg2) {
+  if (f) {
+    f(arg1, arg2);
+  }
 }
 
 }  // namespace interprocess

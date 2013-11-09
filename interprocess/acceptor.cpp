@@ -54,29 +54,18 @@ void Acceptor::ListenInThread() {
   std::exception_ptr eptr;
   try {
     HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
-    ScopeGuard auto_release_conn_event([&] { CloseHandle(conn_event); });
-    if (conn_event == NULL) {
-      auto_release_conn_event.Dismiss();
-      auto msg = std::string("CreateEvent (connect event) failed GLE = ");
-      msg.append(std::to_string(GetLastError()));
-      std::rethrow_exception(
-        std::make_exception_ptr(ConnectionExcepton(msg)));
-    }
+    ScopeGuard raii_conn_event([&] { CloseHandle(conn_event); });
+    raise_exception_if([&]() { return !conn_event; }, raii_conn_event);
+
     HANDLE write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ScopeGuard auto_release_write_event([&] { CloseHandle(write_event); });
-    if (write_event == NULL) {
-      auto_release_write_event.Dismiss();
-      auto msg = std::string("CreateEvent (write event) failed GLE = ");
-      msg.append(std::to_string(GetLastError()));
-      std::rethrow_exception(
-        std::make_exception_ptr(ConnectionExcepton(msg)));
-    }
+    ScopeGuard raii_write_event([&] { CloseHandle(write_event); });
+    raise_exception_if([&]() { return !write_event; }, raii_write_event);
 
     HANDLE events[3] = { conn_event, write_event, close_event_ };
     connect_overlap_.hEvent = conn_event;
     bool pendding = CreateConnectInstance();
 
-    for (;;) {
+    while (true) {
       auto wait = WaitForMultipleObjectsEx(
         3,
         events,         // events object to wait for
@@ -89,25 +78,22 @@ void Acceptor::ListenInThread() {
         // If an operation is pending, get the result of the
         // connect operation.
         if (pendding) {
-          DWORD ret = 0;
-          auto success = GetOverlappedResult(
-            next_pipe_,         // pipe handle
-            &connect_overlap_,  // OVERLAPPED structure
-            &ret,               // bytes transferred
-            FALSE);             // does not wait
-          raise_exception_if([&]() { return !success;});
+          raise_exception_if([&, this]() {
+            DWORD ret = 0;
+            return !GetOverlappedResult(
+              next_pipe_,         // pipe handle
+              &connect_overlap_,  // OVERLAPPED structure
+              &ret,               // bytes transferred
+              FALSE);             // does not wait
+          });
         }
-        if (new_connection_callback_) {
-          new_connection_callback_(next_pipe_, write_event);
-        }
+        call_if_exist(new_connection_callback_, next_pipe_, write_event);
         pendding = CreateConnectInstance();
         break;
 
       // Send operation pendding
       case WAIT_OBJECT_0 + 1:
-        if (async_io_callback_) {
-          async_io_callback_();
-        }
+        call_if_exist(async_io_callback_);
         break;
 
       case WAIT_OBJECT_0 + 2:
@@ -128,9 +114,7 @@ void Acceptor::ListenInThread() {
     eptr = std::current_exception();
   }
 
-  if (exception_callback_) {
-    exception_callback_(eptr);
-  }
+  call_if_exist(exception_callback_, eptr);
 }
 
 bool Acceptor::CreateConnectInstance() {
@@ -151,11 +135,10 @@ bool Acceptor::CreateConnectInstance() {
 
   bool pendding = false;
 
-  // Start an overlapped connection for this pipe instance.
-  auto connected = ConnectNamedPipe(next_pipe_, &connect_overlap_);
-
   // Overlapped ConnectNamedPipe should return zero.
-  raise_exception_if([&]() { return connected; });
+  raise_exception_if([this]() {
+    return ConnectNamedPipe(next_pipe_, &connect_overlap_);
+  });
 
   switch (GetLastError()) {
   // The overlapped connection in progress.
