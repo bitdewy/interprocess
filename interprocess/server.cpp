@@ -43,7 +43,7 @@ class Server::Impl {
 
 Server::Impl::Impl(const std::string& endpoint)
   : acceptor_(new Acceptor(endpoint)),
-  name_(endpoint) {}
+    name_(endpoint) {}
 
 Server::Impl::~Impl() {}
 
