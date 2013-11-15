@@ -133,8 +133,6 @@ bool Acceptor::CreateConnectInstance() {
 
   raise_exception_if([this]() { return next_pipe_ == INVALID_HANDLE_VALUE; });
 
-  bool pendding = false;
-
   // Overlapped ConnectNamedPipe should return zero.
   raise_exception_if([this]() {
     return ConnectNamedPipe(next_pipe_, &connect_overlap_);
