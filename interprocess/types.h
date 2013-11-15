@@ -84,6 +84,13 @@ class ConnectionExcepton : public std::exception {
 
 typedef std::function<void(const std::exception_ptr&)> ExceptionCallback;
 
+template <int N> class Type {
+ public:
+  enum {
+    value = N
+  };
+};
+
 static const int kTimeout = 5000;
 
 static const int kBufferSize = 4096;

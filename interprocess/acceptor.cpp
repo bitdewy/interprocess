@@ -141,23 +141,30 @@ bool Acceptor::CreateConnectInstance() {
   });
 
   switch (GetLastError()) {
-  // The overlapped connection in progress.
   case ERROR_IO_PENDING:
-    pendding = true;
-    break;
-
-  // Client is already connected, so signal an event.
+    return Pendding(Type<ERROR_IO_PENDING>());
   case ERROR_PIPE_CONNECTED:
-    if (SetEvent(connect_overlap_.hEvent)) {
-      break;
-    }
-    // jump to default
-
-  // If an error occurs during the connect operation...
+    return Pendding(Type<ERROR_PIPE_CONNECTED>());
   default:
-    raise_exception();
+    return Pendding(Type<-1>());
   }
-  return pendding;
+}
+
+template<int N> bool Acceptor::Pendding(Type<N> tag) {
+  raise_exception();
+  return false;
+}
+
+template<> bool Acceptor::Pendding(Type<ERROR_IO_PENDING>) {
+  return true;
+}
+
+template<> bool Acceptor::Pendding(Type<ERROR_PIPE_CONNECTED>) {
+  if (SetEvent(connect_overlap_.hEvent)) {
+    return false;
+  } else {
+    return Pendding(Type<-1>());
+  }
 }
 
 }  // namespace interprocess

@@ -29,6 +29,9 @@ class Acceptor : public noncopyable {
  private:
   void ListenInThread();
   bool CreateConnectInstance();
+  template<int N> bool Pendding(Type<N> tag);
+  template<> bool Pendding(Type<ERROR_IO_PENDING> tag);
+  template<> bool Pendding(Type<ERROR_PIPE_CONNECTED> tag);
 
   const std::string pipe_name_;
   std::thread listen_thread_;
