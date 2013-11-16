@@ -8,9 +8,9 @@
 #define INTERPROCESS_ACCEPTOR_H_
 
 #include <windows.h>
+#include <thread>
 #include <map>
 #include <string>
-#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {

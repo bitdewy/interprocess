@@ -152,10 +152,11 @@ bool Acceptor::CreateConnectInstance() {
 bool Acceptor::Pendding(int err) {
   auto it = pendding_function_map_.find(err);
   if (it != pendding_function_map_.end()) {
-	  return it->second();
+    return it->second();
   } else {
-	  raise_exception();
-	  return false;
+    raise_exception();
+    return false;
   }
 }
+
 }  // namespace interprocess
