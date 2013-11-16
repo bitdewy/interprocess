@@ -8,8 +8,9 @@
 #define INTERPROCESS_ACCEPTOR_H_
 
 #include <windows.h>
-#include <thread>
+#include <map>
 #include <string>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
@@ -35,6 +36,7 @@ class Acceptor : public noncopyable {
 
   const std::string pipe_name_;
   std::thread listen_thread_;
+  std::map<int, std::function<bool()> > pendding_map_;
   HANDLE next_pipe_;
   HANDLE close_event_;
   OVERLAPPED connect_overlap_;
