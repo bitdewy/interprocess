@@ -30,13 +30,11 @@ class Acceptor : public noncopyable {
  private:
   void ListenInThread();
   bool CreateConnectInstance();
-  template<int N> bool Pendding(Type<N> tag);
-  template<> bool Pendding(Type<ERROR_IO_PENDING> tag);
-  template<> bool Pendding(Type<ERROR_PIPE_CONNECTED> tag);
+  bool Pendding(int err);
 
   const std::string pipe_name_;
   std::thread listen_thread_;
-  std::map<int, std::function<bool()> > pendding_map_;
+  std::map<int, std::function<bool()> > pendding_function_map_;
   HANDLE next_pipe_;
   HANDLE close_event_;
   OVERLAPPED connect_overlap_;

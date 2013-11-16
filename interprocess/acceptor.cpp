@@ -15,6 +15,14 @@ Acceptor::Acceptor(const std::string& endpoint)
     next_pipe_(NULL),
     close_event_(CreateEvent(NULL, FALSE, FALSE, NULL)) {
   ZeroMemory(&connect_overlap_, sizeof connect_overlap_);
+  pendding_function_map_.insert(
+    std::make_pair(ERROR_IO_PENDING, [] { return true; }));
+  pendding_function_map_.insert(std::make_pair(ERROR_PIPE_CONNECTED, [this] {
+    if (!SetEvent(connect_overlap_.hEvent)) {
+      raise_exception();
+    }
+    return false;
+  }));
 }
 
 Acceptor::~Acceptor() {
@@ -138,31 +146,16 @@ bool Acceptor::CreateConnectInstance() {
     return ConnectNamedPipe(next_pipe_, &connect_overlap_);
   });
 
-  switch (GetLastError()) {
-  case ERROR_IO_PENDING:
-    return Pendding(Type<ERROR_IO_PENDING>());
-  case ERROR_PIPE_CONNECTED:
-    return Pendding(Type<ERROR_PIPE_CONNECTED>());
-  default:
-    return Pendding(Type<-1>());
-  }
+  return Pendding(GetLastError());
 }
 
-template<int N> bool Acceptor::Pendding(Type<N> tag) {
-  raise_exception();
-  return false;
-}
-
-template<> bool Acceptor::Pendding(Type<ERROR_IO_PENDING>) {
-  return true;
-}
-
-template<> bool Acceptor::Pendding(Type<ERROR_PIPE_CONNECTED>) {
-  if (SetEvent(connect_overlap_.hEvent)) {
-    return false;
+bool Acceptor::Pendding(int err) {
+  auto it = pendding_function_map_.find(err);
+  if (it != pendding_function_map_.end()) {
+	  return it->second();
   } else {
-    return Pendding(Type<-1>());
+	  raise_exception();
+	  return false;
   }
 }
-
 }  // namespace interprocess
