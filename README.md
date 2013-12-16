@@ -5,7 +5,7 @@ A Win32 Inter-process Communication (IPC) library
 
 Building
 -----------------------
-open [vsproject/ipc.sln](vsproject/ipc.sln) with Visual Studio 2012, and build 
+open [vsproject/ipc.sln](vsproject/ipc.sln) with Visual Studio 2013, and build 
 
 License
 -----------------------

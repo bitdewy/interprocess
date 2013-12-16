@@ -79,12 +79,11 @@ void Server::Impl::Broadcast(const std::string& message) {
   });
 }
 
-
 void Server::Impl::CloseConnection(const std::string& name) {
   typedef std::pair<std::string, ConnectionPtr> ConnectionMapItem;
   auto it = std::find_if(std::begin(connection_map_),
                          std::end(connection_map_),
-                         [=](const ConnectionMapItem& pair) {
+                         [&](const ConnectionMapItem& pair) {
     return name == pair.first;
   });
   if (it != std::end(connection_map_)) {
@@ -105,6 +104,7 @@ void Server::Impl::NewConnection(HANDLE pipe, HANDLE write_event) {
 
 void Server::Impl::RemoveConnection(const ConnectionPtr& conn) {
   if (!DisconnectNamedPipe(ConnectionAttorney::Handle(conn))) {
+    // FIXME: throw exception instead
     printf("DisconnectNamedPipe failed with %d.\n", GetLastError());
   }
   connection_map_.erase(conn->Name());
@@ -114,7 +114,7 @@ void Server::Impl::RemoveConnection(const ConnectionPtr& conn) {
 void Server::Impl::SendInAlertableThread() {
   std::for_each(std::begin(connection_map_),
                 std::end(connection_map_),
-                [](std::pair<std::string, ConnectionPtr> pair) {
+                [](const std::pair<std::string, ConnectionPtr>& pair) {
     if (pair.second->State() == Connection::SEND_PENDDING) {
       ConnectionAttorney::AsyncWrite(pair.second);
     }
