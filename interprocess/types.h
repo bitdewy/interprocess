@@ -64,6 +64,8 @@ class Connection;
 
 typedef std::shared_ptr<Connection> ConnectionPtr;
 
+typedef std::function<void(HANDLE, HANDLE, HANDLE)> NewConnectionCallback;
+
 typedef std::function<void(const ConnectionPtr&)> CloseCallback;
 
 typedef
@@ -121,17 +123,10 @@ inline void call_if_exist(Function f) {
   }
 }
 
-template <typename Function, typename Arg>
-inline void call_if_exist(Function f, Arg arg) {
+template <typename Function, typename... Arg>
+inline void call_if_exist(Function f, Arg... arg) {
   if (f) {
-    f(arg);
-  }
-}
-
-template <typename Function, typename Arg1, typename Arg2>
-inline void call_if_exist(Function f, Arg1 arg1, Arg2 arg2) {
-  if (f) {
-    f(arg1, arg2);
+    f(std::forward<Arg>(arg)...);
   }
 }
 

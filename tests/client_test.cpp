@@ -21,8 +21,8 @@ void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
     if (eptr) {
       std::rethrow_exception(eptr);
     } else {
-      c->Connection()->Send(c->Name());
-      c->Connection()->Send("abcdefghijklmnopqrstuvwxyz");
+      c->Connection()->Post(c->Name());
+      c->Connection()->Post("abcdefghijklmnopqrstuvwxyz");
     }
   } catch (const std::exception& e) {
     printf("Caught exception \"%s\"\n", e.what());

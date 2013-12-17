@@ -8,6 +8,7 @@
 #define INTERPROCESS_CONNECTION_H_
 
 #include <windows.h>
+#include <condition_variable>
 #include <thread>
 #include <mutex>
 #include <memory>
@@ -25,10 +26,11 @@ class Connection : public noncopyable,
     SEND_PENDDING,
     CONNECTED,
   };
-  Connection(const std::string& name, HANDLE pipe, HANDLE send_event);
+  Connection(const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
   ~Connection();
   std::string Name() const;
-  void Send(const std::string& message);
+  void Post(const std::string& message);
+  std::string Send(const std::string& message);
   void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;
@@ -51,6 +53,7 @@ class Connection : public noncopyable,
   std::string name_;
   StateE state_;
   HANDLE pipe_;
+  HANDLE post_event_;
   HANDLE send_event_;
   HANDLE cancel_io_event_;
   DWORD write_size_;
@@ -58,6 +61,9 @@ class Connection : public noncopyable,
   char write_buf_[kBufferSize];
   std::mutex sending_queue_mutex_;
   SendingQueue sending_queue_;
+  std::condition_variable sync_message_buffer_cond;
+  std::string sync_response_buffer_;
+  std::mutex sync_response_buffer_mutex_;
   IoCompletionRoutine io_overlap_;
   std::thread::id io_thread_id_;
   bool disconnecting_;

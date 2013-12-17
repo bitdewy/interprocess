@@ -13,7 +13,7 @@ void OnMessage(
   const interprocess::ConnectionPtr& conn, const std::string& msg) {
   static int i = 0;
   printf("[%d]: %s\n", i++, msg.c_str());
-  conn->Send(msg);
+  conn->Post(msg);
   conn->Close();
 }
 

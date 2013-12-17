@@ -15,8 +15,6 @@ namespace interprocess {
 
 class Connector : public noncopyable {
  public:
-  typedef std::function<void(HANDLE, HANDLE)> NewConnectionCallback;
-
   explicit Connector(const std::string& endpoint);
   ~Connector();
   void Start();
@@ -31,7 +29,8 @@ class Connector : public noncopyable {
 
   std::string pipe_name_;
   std::thread connect_thread_;
-  HANDLE write_event_;
+  HANDLE post_event_;
+  HANDLE send_event_;
   HANDLE close_event_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;

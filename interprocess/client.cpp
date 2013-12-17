@@ -26,7 +26,7 @@ class Client::Impl {
   void Stop();
 
  private:
-  void NewConnection(HANDLE pipe, HANDLE write_event);
+  void NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event);
   void ResetConnection(const ConnectionPtr& conn);
   void SendInAlertableThread();
 
@@ -47,9 +47,10 @@ Client::Impl::~Impl() {}
 void Client::Impl::Connect(const std::string& server_name) {
   using std::placeholders::_1;
   using std::placeholders::_2;
+  using std::placeholders::_3;
   connector_.reset(new Connector(server_name));
   connector_->SetNewConnectionCallback(
-    std::bind(&Client::Impl::NewConnection, this, _1, _2));
+    std::bind(&Client::Impl::NewConnection, this, _1, _2, _3));
   connector_->SetExceptionCallback(exception_callback_);
   connector_->MoveIOFunctionToAlertableThread(
     std::bind(&Client::Impl::SendInAlertableThread, this));
@@ -76,12 +77,12 @@ void Client::Impl::Stop() {
   connector_->Stop();
 }
 
-void Client::Impl::NewConnection(HANDLE pipe, HANDLE write_event) {
+void Client::Impl::NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event) {
   using std::placeholders::_1;
   using interprocess::Connection;
   auto name = name_.append("#").append(
     std::to_string(reinterpret_cast<int32_t>(pipe)));
-  conn_ = std::make_shared<Connection>(name, pipe, write_event);
+  conn_ = std::make_shared<Connection>(name, pipe, post_event, send_event);
   conn_->SetCloseCallback(
     std::bind(&Client::Impl::ResetConnection, this, _1));
   ConnectionAttorney::SetMessageCallback(conn_, message_callback_);

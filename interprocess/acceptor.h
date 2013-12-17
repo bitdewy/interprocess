@@ -17,8 +17,6 @@ namespace interprocess {
 
 class Acceptor : public noncopyable {
  public:
-  typedef std::function<void(HANDLE, HANDLE)> NewConnectionCallback;
-
   explicit Acceptor(const std::string& endpoint);
   ~Acceptor();
   void Listen();
@@ -41,6 +39,7 @@ class Acceptor : public noncopyable {
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
+  std::function<void()> sync_io_callback_;
 };
 
 }  // namespace interprocess

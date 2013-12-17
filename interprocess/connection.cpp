@@ -10,8 +10,6 @@
 
 namespace interprocess {
 
-VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
-
 VOID WINAPI CompletedReadRoutine(
   DWORD err, DWORD readed, LPOVERLAPPED overlap) {
   auto context = (Connection::IoCompletionRoutine*)overlap;
@@ -69,11 +67,13 @@ VOID WINAPI CompletedWriteRoutine(
   }
 }
 
-Connection::Connection(const std::string& name, HANDLE pipe, HANDLE event)
+Connection::Connection(
+  const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event)
   : name_(name),
     state_(UNKNOW),
     pipe_(pipe),
-    send_event_(event),
+    post_event_(post_event),
+    send_event_(send_event),
     cancel_io_event_(CreateEvent(NULL, FALSE, FALSE, NULL)),
     write_size_(0),
     io_thread_id_(std::this_thread::get_id()),
@@ -95,14 +95,26 @@ std::string Connection::Name() const {
   return name_;
 }
 
-void Connection::Send(const std::string& message) {
+void Connection::Post(const std::string& message) {
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
     assert(message.size() < kBufferSize);
     sending_queue_.push_back(message);
     state_ = SEND_PENDDING;
   }
-  SetEvent(send_event_);
+  SetEvent(post_event_);
+}
+
+std::string Connection::Send(const std::string& message) {
+  assert(io_thread_id_ != std::this_thread::get_id());
+  std::unique_lock<std::mutex> lock(sync_response_buffer_mutex_);
+  sync_message_buffer_cond.wait_for(
+    lock,
+    std::chrono::seconds(2),
+    [this]() { return !sync_response_buffer_.empty(); });
+  std::string result;
+  result.swap(sync_response_buffer_);
+  return result;
 }
 
 void Connection::Close() {
