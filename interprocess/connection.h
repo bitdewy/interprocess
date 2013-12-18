@@ -8,6 +8,7 @@
 #define INTERPROCESS_CONNECTION_H_
 
 #include <windows.h>
+#include <condition_variable>
 #include <thread>
 #include <mutex>
 #include <memory>
@@ -25,10 +26,12 @@ class Connection : public noncopyable,
     SEND_PENDDING,
     CONNECTED,
   };
-  Connection(const std::string& name, HANDLE pipe, HANDLE send_event);
+  Connection(
+    const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
   ~Connection();
   std::string Name() const;
   void Send(const std::string& message);
+  std::string TransactMessage(std::string message);
   void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;
@@ -37,9 +40,11 @@ class Connection : public noncopyable,
   void Shutdown();
   void SetMessageCallback(const MessageCallback& cb);
   HANDLE Handle() const;
-  bool AsyncRead();
+  bool AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb);
   bool AsyncWrite();
-  bool AsyncWrite(const std::string& message);
+  bool AsyncWaitWrite();
+  bool AsyncWrite(
+    const std::string& message, LPOVERLAPPED_COMPLETION_ROUTINE cb);
   typedef std::deque<std::string> SendingQueue;
   struct IoCompletionRoutine {
     OVERLAPPED overlap;
@@ -51,6 +56,7 @@ class Connection : public noncopyable,
   std::string name_;
   StateE state_;
   HANDLE pipe_;
+  HANDLE post_event_;
   HANDLE send_event_;
   HANDLE cancel_io_event_;
   DWORD write_size_;
@@ -58,13 +64,19 @@ class Connection : public noncopyable,
   char write_buf_[kBufferSize];
   std::mutex sending_queue_mutex_;
   SendingQueue sending_queue_;
+  std::condition_variable transact_message_buffer_cond;
+  std::string transact_message_buffer_;
+  std::mutex transact_message_buffer_mutex_;
   IoCompletionRoutine io_overlap_;
   std::thread::id io_thread_id_;
   bool disconnecting_;
 
   friend class ConnectionAttorney;
-  friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
+
   friend VOID WINAPI CompletedReadRoutine(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedReadRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedWriteRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
 };
 
 class ConnectionAttorney {
@@ -82,6 +94,10 @@ class ConnectionAttorney {
 
   static void AsyncWrite(const ConnectionPtr& c) {
     c->AsyncWrite();
+  }
+
+  static void AsyncWaitWrite(const ConnectionPtr& c) {
+    c->AsyncWaitWrite();
   }
 };
 

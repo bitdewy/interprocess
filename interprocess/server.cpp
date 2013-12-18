@@ -28,9 +28,10 @@ class Server::Impl {
   void CloseConnection(const std::string& name);
 
  private:
-  void NewConnection(HANDLE pipe, HANDLE write_event);
+  void NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event);
   void RemoveConnection(const ConnectionPtr& conn);
-  void SendInAlertableThread();
+  void AsyncWrite();
+  void AsyncWaitWrite();
 
   ConnectionMap connection_map_;
   std::unique_ptr<Acceptor> acceptor_;
@@ -50,11 +51,14 @@ Server::Impl::~Impl() {}
 void Server::Impl::Listen() {
   using std::placeholders::_1;
   using std::placeholders::_2;
+  using std::placeholders::_3;
   acceptor_->SetNewConnectionCallback(
-    std::bind(&Server::Impl::NewConnection, this, _1, _2));
+    std::bind(&Server::Impl::NewConnection, this, _1, _2, _3));
   acceptor_->SetExceptionCallback(exception_callback_);
-  acceptor_->MoveIOFunctionToAlertableThread(
-    std::bind(&Server::Impl::SendInAlertableThread, this));
+  acceptor_->MoveAsyncIOFunctionToAlertableThread(
+    std::bind(&Server::Impl::AsyncWrite, this));
+  acceptor_->MoveWaitResponseIOFunctionToAlertableThread(
+    std::bind(&Server::Impl::AsyncWaitWrite, this));
   acceptor_->Listen();
 }
 
@@ -91,11 +95,12 @@ void Server::Impl::CloseConnection(const std::string& name) {
   }
 }
 
-void Server::Impl::NewConnection(HANDLE pipe, HANDLE write_event) {
+void Server::Impl::NewConnection(
+  HANDLE pipe, HANDLE post_event, HANDLE send_event) {
   using std::placeholders::_1;
   auto name = name_.append("#").append(
     std::to_string(reinterpret_cast<int32_t>(pipe)));
-  auto conn = std::make_shared<Connection>(name, pipe, write_event);
+  auto conn = std::make_shared<Connection>(name, pipe, post_event, send_event);
   conn->SetCloseCallback(
     std::bind(&Server::Impl::RemoveConnection, this, _1));
   ConnectionAttorney::SetMessageCallback(conn, message_callback_);
@@ -111,7 +116,7 @@ void Server::Impl::RemoveConnection(const ConnectionPtr& conn) {
 }
 
 
-void Server::Impl::SendInAlertableThread() {
+void Server::Impl::AsyncWrite() {
   std::for_each(std::begin(connection_map_),
                 std::end(connection_map_),
                 [](const std::pair<std::string, ConnectionPtr>& pair) {
@@ -119,6 +124,10 @@ void Server::Impl::SendInAlertableThread() {
       ConnectionAttorney::AsyncWrite(pair.second);
     }
   });
+}
+
+void Server::Impl::AsyncWaitWrite() {
+  assert(("server should not use async and wait", false));
 }
 
 // Server wrapper

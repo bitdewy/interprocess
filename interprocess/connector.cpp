@@ -13,14 +13,12 @@ namespace interprocess {
 
 Connector::Connector(const std::string& endpoint)
   : pipe_name_(std::string("\\\\.\\pipe\\").append(endpoint)),
-    write_event_(CreateEvent(NULL, FALSE, FALSE, NULL)),
     close_event_(CreateEvent(NULL, FALSE, FALSE, NULL)) {
-  assert(write_event_ != NULL && close_event_ != NULL);
+  assert(close_event_ != NULL);
 }
 
 Connector::~Connector() {
   Stop();
-  CloseHandle(write_event_);
   CloseHandle(close_event_);
 }
 
@@ -44,9 +42,14 @@ void Connector::SetExceptionCallback(const ExceptionCallback& cb) {
   exception_callback_ = cb;
 }
 
-void Connector::MoveIOFunctionToAlertableThread(
+void Connector::MoveAsyncIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
+}
+
+void Connector::MoveWaitResponseIOFunctionToAlertableThread(
+  const std::function<void()>& cb) {
+  async_wait_io_callback_ = cb;
 }
 
 HANDLE Connector::CreateConnectionInstance() {
@@ -91,9 +94,12 @@ void Connector::ConnectInThread() {
       NULL);    // don't set maximum time
     raise_exception_if([&]() { return !success; });
 
-    call_if_exist(new_connection_callback_, pipe, write_event_);
+    SECURITY_CREATE_EVENT(post_event, FALSE, FALSE);
+    SECURITY_CREATE_EVENT(send_event, FALSE, FALSE);
 
-    HANDLE events[2] = { write_event_, close_event_ };
+    call_if_exist(new_connection_callback_, pipe, post_event, send_event);
+
+    HANDLE events[3] = { post_event, send_event, close_event_ };
 
     while (true) {
       auto wait = WaitForMultipleObjectsEx(
@@ -109,6 +115,10 @@ void Connector::ConnectInThread() {
         break;
 
       case WAIT_OBJECT_0 + 1:
+        call_if_exist(async_wait_io_callback_);
+        break;
+
+      case WAIT_OBJECT_0 + 2:
         return;
 
       // The wait is satisfied by a completed read or write

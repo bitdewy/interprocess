@@ -17,15 +17,15 @@ namespace interprocess {
 
 class Acceptor : public noncopyable {
  public:
-  typedef std::function<void(HANDLE, HANDLE)> NewConnectionCallback;
-
   explicit Acceptor(const std::string& endpoint);
   ~Acceptor();
   void Listen();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
-  void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
+  void MoveAsyncIOFunctionToAlertableThread(const std::function<void()>& cb);
+  void MoveWaitResponseIOFunctionToAlertableThread(
+    const std::function<void()>& cb);
 
  private:
   void ListenInThread();
@@ -34,13 +34,14 @@ class Acceptor : public noncopyable {
 
   const std::string pipe_name_;
   std::thread listen_thread_;
-  std::map<int, std::function<bool()> > pendding_function_map_;
+  std::map<int, std::function<bool()>> pendding_function_map_;
   HANDLE next_pipe_;
   HANDLE close_event_;
   OVERLAPPED connect_overlap_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
+  std::function<void()> async_wait_io_callback_;
 };
 
 }  // namespace interprocess

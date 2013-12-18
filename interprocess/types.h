@@ -64,6 +64,8 @@ class Connection;
 
 typedef std::shared_ptr<Connection> ConnectionPtr;
 
+typedef std::function<void(HANDLE, HANDLE, HANDLE)> NewConnectionCallback;
+
 typedef std::function<void(const ConnectionPtr&)> CloseCallback;
 
 typedef
@@ -121,20 +123,18 @@ inline void call_if_exist(Function f) {
   }
 }
 
-template <typename Function, typename Arg>
-inline void call_if_exist(Function f, Arg arg) {
+template <typename Function, typename... Arg>
+inline void call_if_exist(Function f, Arg... arg) {
   if (f) {
-    f(arg);
-  }
-}
-
-template <typename Function, typename Arg1, typename Arg2>
-inline void call_if_exist(Function f, Arg1 arg1, Arg2 arg2) {
-  if (f) {
-    f(arg1, arg2);
+    f(std::forward<Arg>(arg)...);
   }
 }
 
 }  // namespace interprocess
+
+#define SECURITY_CREATE_EVENT(name, manual, initial) \
+HANDLE name = CreateEvent(NULL, manual, initial, NULL); \
+ScopeGuard name##_guard([&] { CloseHandle(name); }); \
+raise_exception_if([&]() { return !name; }, name##_guard);
 
 #endif  // INTERPROCESS_TYPES_H_
