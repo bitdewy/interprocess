@@ -21,8 +21,8 @@ void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
     if (eptr) {
       std::rethrow_exception(eptr);
     } else {
-      c->Connection()->Post(c->Name());
-      c->Connection()->Post("abcdefghijklmnopqrstuvwxyz");
+      c->Connection()->Send(c->Name());
+      c->Connection()->Send("abcdefghijklmnopqrstuvwxyz");
     }
   } catch (const std::exception& e) {
     printf("Caught exception \"%s\"\n", e.what());
@@ -36,6 +36,9 @@ void InThread() {
   client.SetExceptionCallback(
     std::bind(OnException, &client, std::placeholders::_1));
   client.Connect("mynamedpipe");
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  auto response = client.Connection()->TransactMessage("hehe");
+  printf("TransactMessage response: %s\n", response.c_str());
   std::this_thread::sleep_for(std::chrono::seconds(10));
   client.Stop();
 }

@@ -52,28 +52,23 @@ void Acceptor::SetExceptionCallback(const ExceptionCallback& cb) {
   exception_callback_ = cb;
 }
 
-void Acceptor::MoveIOFunctionToAlertableThread(
+void Acceptor::MoveAsyncIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
 }
 
+void Acceptor::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
+  async_wait_io_callback_ = cb;
+}
 
 void Acceptor::ListenInThread() {
   std::exception_ptr eptr;
   try {
-    HANDLE conn_event = CreateEvent(NULL, TRUE, TRUE, NULL);
-    ScopeGuard conn_event_guard([&] { CloseHandle(conn_event); });
-    raise_exception_if([&]() { return !conn_event; }, conn_event_guard);
+    SECURITY_CREATE_EVENT(conn_event, TRUE, TRUE);
+    SECURITY_CREATE_EVENT(post_event, FALSE, FALSE);
+    SECURITY_CREATE_EVENT(send_event, FALSE, FALSE);
 
-    HANDLE write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ScopeGuard write_event_guard([&] { CloseHandle(write_event); });
-    raise_exception_if([&]() { return !write_event; }, write_event_guard);
-
-    HANDLE sync_write_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    ScopeGuard sync_write_event_guard([&] { CloseHandle(sync_write_event); });
-    raise_exception_if([&]() { return !sync_write_event; }, sync_write_event_guard);
-
-    HANDLE events[4] = { conn_event, write_event, sync_write_event, close_event_ };
+    HANDLE events[4] = { conn_event, post_event, send_event, close_event_ };
     connect_overlap_.hEvent = conn_event;
     bool pendding = CreateConnectInstance();
 
@@ -99,7 +94,8 @@ void Acceptor::ListenInThread() {
               FALSE);             // does not wait
           });
         }
-        call_if_exist(new_connection_callback_, next_pipe_, write_event, sync_write_event);
+        call_if_exist(
+          new_connection_callback_, next_pipe_, post_event, send_event);
         pendding = CreateConnectInstance();
         break;
 
@@ -109,7 +105,7 @@ void Acceptor::ListenInThread() {
         break;
 
       case WAIT_OBJECT_0 + 2:
-        call_if_exist(sync_io_callback_);
+        call_if_exist(async_wait_io_callback_);
         break;
 
       case WAIT_OBJECT_0 + 3:

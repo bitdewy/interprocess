@@ -26,11 +26,12 @@ class Connection : public noncopyable,
     SEND_PENDDING,
     CONNECTED,
   };
-  Connection(const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
+  Connection(
+    const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
   ~Connection();
   std::string Name() const;
-  void Post(const std::string& message);
-  std::string Send(const std::string& message);
+  void Send(const std::string& message);
+  std::string TransactMessage(std::string message);
   void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;
@@ -39,9 +40,11 @@ class Connection : public noncopyable,
   void Shutdown();
   void SetMessageCallback(const MessageCallback& cb);
   HANDLE Handle() const;
-  bool AsyncRead();
+  bool AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb);
   bool AsyncWrite();
-  bool AsyncWrite(const std::string& message);
+  bool AsyncWaitWrite();
+  bool AsyncWrite(
+    const std::string& message, LPOVERLAPPED_COMPLETION_ROUTINE cb);
   typedef std::deque<std::string> SendingQueue;
   struct IoCompletionRoutine {
     OVERLAPPED overlap;
@@ -61,16 +64,19 @@ class Connection : public noncopyable,
   char write_buf_[kBufferSize];
   std::mutex sending_queue_mutex_;
   SendingQueue sending_queue_;
-  std::condition_variable sync_message_buffer_cond;
-  std::string sync_response_buffer_;
-  std::mutex sync_response_buffer_mutex_;
+  std::condition_variable transact_message_buffer_cond;
+  std::string transact_message_buffer_;
+  std::mutex transact_message_buffer_mutex_;
   IoCompletionRoutine io_overlap_;
   std::thread::id io_thread_id_;
   bool disconnecting_;
 
   friend class ConnectionAttorney;
+  friend VOID WINAPI CompletedWriteRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedReadRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
   friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
   friend VOID WINAPI CompletedReadRoutine(DWORD, DWORD, LPOVERLAPPED);
+
 };
 
 class ConnectionAttorney {
@@ -88,6 +94,10 @@ class ConnectionAttorney {
 
   static void AsyncWrite(const ConnectionPtr& c) {
     c->AsyncWrite();
+  }
+
+  static void AsyncWaitWrite(const ConnectionPtr& c) {
+    c->AsyncWaitWrite();
   }
 };
 

@@ -13,15 +13,14 @@ void OnMessage(
   const interprocess::ConnectionPtr& conn, const std::string& msg) {
   static int i = 0;
   printf("[%d]: %s\n", i++, msg.c_str());
-  conn->Post(msg);
-  conn->Close();
+  conn->Send(msg);
 }
 
 int main() {
   interprocess::Server server("mynamedpipe");
   server.SetMessageCallback(OnMessage);
   server.Listen();
-  std::this_thread::sleep_for(std::chrono::seconds(30));
+  std::this_thread::sleep_for(std::chrono::hours(30));
   server.Broadcast("0");
   server.Stop();
   return 0;
