@@ -26,7 +26,8 @@ class Connection : public noncopyable,
     SEND_PENDDING,
     CONNECTED,
   };
-  Connection(const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
+  Connection(
+    const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
   ~Connection();
   std::string Name() const;
   void Post(const std::string& message);

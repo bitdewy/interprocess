@@ -92,7 +92,8 @@ void Server::Impl::CloseConnection(const std::string& name) {
   }
 }
 
-void Server::Impl::NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event) {
+void Server::Impl::NewConnection(
+  HANDLE pipe, HANDLE post_event, HANDLE send_event) {
   using std::placeholders::_1;
   auto name = name_.append("#").append(
     std::to_string(reinterpret_cast<int32_t>(pipe)));

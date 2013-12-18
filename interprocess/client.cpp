@@ -77,7 +77,8 @@ void Client::Impl::Stop() {
   connector_->Stop();
 }
 
-void Client::Impl::NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event) {
+void Client::Impl::NewConnection(
+  HANDLE pipe, HANDLE post_event, HANDLE send_event) {
   using std::placeholders::_1;
   using interprocess::Connection;
   auto name = name_.append("#").append(
