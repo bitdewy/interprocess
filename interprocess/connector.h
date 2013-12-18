@@ -29,8 +29,6 @@ class Connector : public noncopyable {
 
   std::string pipe_name_;
   std::thread connect_thread_;
-  HANDLE post_event_;
-  HANDLE send_event_;
   HANDLE close_event_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;

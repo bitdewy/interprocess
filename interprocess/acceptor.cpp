@@ -8,11 +8,6 @@
 #include <windows.h>
 #include <string>
 
-#define SECURITY_CREATE_EVENT(name, manual, initial) \
-HANDLE name = CreateEvent(NULL, manual, initial, NULL); \
-ScopeGuard name##_guard([&] { CloseHandle(name); }); \
-raise_exception_if([&]() { return !name; }, name##_guard);
-
 namespace interprocess {
 
 Acceptor::Acceptor(const std::string& endpoint)

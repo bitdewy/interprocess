@@ -132,4 +132,9 @@ inline void call_if_exist(Function f, Arg... arg) {
 
 }  // namespace interprocess
 
+#define SECURITY_CREATE_EVENT(name, manual, initial) \
+HANDLE name = CreateEvent(NULL, manual, initial, NULL); \
+ScopeGuard name##_guard([&] { CloseHandle(name); }); \
+raise_exception_if([&]() { return !name; }, name##_guard);
+
 #endif  // INTERPROCESS_TYPES_H_
