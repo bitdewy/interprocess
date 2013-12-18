@@ -42,7 +42,7 @@ void Connector::SetExceptionCallback(const ExceptionCallback& cb) {
   exception_callback_ = cb;
 }
 
-void Connector::MoveIOFunctionToAlertableThread(
+void Connector::MoveAsyncIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
 }

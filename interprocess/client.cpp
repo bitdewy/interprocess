@@ -52,7 +52,7 @@ void Client::Impl::Connect(const std::string& server_name) {
   connector_->SetNewConnectionCallback(
     std::bind(&Client::Impl::NewConnection, this, _1, _2, _3));
   connector_->SetExceptionCallback(exception_callback_);
-  connector_->MoveIOFunctionToAlertableThread(
+  connector_->MoveAsyncIOFunctionToAlertableThread(
     std::bind(&Client::Impl::SendInAlertableThread, this));
   connector_->Start();
 }

@@ -23,7 +23,7 @@ class Acceptor : public noncopyable {
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
-  void MoveIOFunctionToAlertableThread(const std::function<void()>& cb);
+  void MoveAsyncIOFunctionToAlertableThread(const std::function<void()>& cb);
 
  private:
   void ListenInThread();

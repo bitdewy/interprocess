@@ -52,7 +52,7 @@ void Acceptor::SetExceptionCallback(const ExceptionCallback& cb) {
   exception_callback_ = cb;
 }
 
-void Acceptor::MoveIOFunctionToAlertableThread(
+void Acceptor::MoveAsyncIOFunctionToAlertableThread(
   const std::function<void()>& cb) {
   async_io_callback_ = cb;
 }
