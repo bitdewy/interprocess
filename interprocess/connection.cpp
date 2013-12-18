@@ -59,7 +59,8 @@ VOID WINAPI CompletedWriteRoutine(
         self->state_ = Connection::CONNECTED;
       }
     }
-    io = pendding ? self->AsyncWrite(message) : self->AsyncRead();
+    auto cb = CompletedWriteRoutine;
+    io = pendding ? self->AsyncWrite(message, cb) : self->AsyncRead();
   }
 
   if (!io) {
@@ -105,15 +106,21 @@ void Connection::Send(const std::string& message) {
   SetEvent(post_event_);
 }
 
-std::string Connection::TransactMessage(const std::string& message) {
-  assert(io_thread_id_ != std::this_thread::get_id());
-  std::unique_lock<std::mutex> lock(sync_response_buffer_mutex_);
-  sync_message_buffer_cond.wait_for(
+std::string Connection::TransactMessage(std::string message) {
+  assert(io_thread_id_ != std::this_thread::get_id() && message.size());
+  std::unique_lock<std::mutex> lock(transact_message_buffer_mutex_);
+  message.swap(transact_message_buffer_);
+  SetEvent(send_event_);
+  transact_message_buffer_cond.wait(lock, [this]() {
+    return transact_message_buffer_.empty();
+  });
+
+  transact_message_buffer_cond.wait_for(
     lock,
     std::chrono::seconds(2),
-    [this]() { return !sync_response_buffer_.empty(); });
+    [this]() { return !transact_message_buffer_.empty(); });
   std::string result;
-  result.swap(sync_response_buffer_);
+  result.swap(transact_message_buffer_);
   return result;
 }
 
@@ -174,10 +181,11 @@ bool Connection::AsyncWrite() {
     message = sending_queue_.front();
     sending_queue_.pop_front();
   }
-  return AsyncWrite(message);
+  return AsyncWrite(message, CompletedWriteRoutine);
 }
 
-bool Connection::AsyncWrite(const std::string& message) {
+bool Connection::AsyncWrite(
+  const std::string& message, LPOVERLAPPED_COMPLETION_ROUTINE cb) {
   write_size_ = message.size();
 #pragma warning(disable:4996)
   // already checked message length when push it into sendding queue
@@ -189,7 +197,7 @@ bool Connection::AsyncWrite(const std::string& message) {
     write_buf_,
     write_size_,
     (LPOVERLAPPED)&io_overlap_,
-    (LPOVERLAPPED_COMPLETION_ROUTINE)CompletedWriteRoutine);
+    cb);
   return !!write;
 }
 

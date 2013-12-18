@@ -57,6 +57,9 @@ void Acceptor::MoveAsyncIOFunctionToAlertableThread(
   async_io_callback_ = cb;
 }
 
+void Acceptor::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
+  sync_io_callback_ = cb;
+}
 
 void Acceptor::ListenInThread() {
   std::exception_ptr eptr;

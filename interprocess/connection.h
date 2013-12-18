@@ -31,7 +31,7 @@ class Connection : public noncopyable,
   ~Connection();
   std::string Name() const;
   void Send(const std::string& message);
-  std::string TransactMessage(const std::string& message);
+  std::string TransactMessage(std::string message);
   void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;
@@ -42,7 +42,9 @@ class Connection : public noncopyable,
   HANDLE Handle() const;
   bool AsyncRead();
   bool AsyncWrite();
-  bool AsyncWrite(const std::string& message);
+  void WriteWaitResponse();
+  bool AsyncWrite(
+    const std::string& message, LPOVERLAPPED_COMPLETION_ROUTINE cb);
   typedef std::deque<std::string> SendingQueue;
   struct IoCompletionRoutine {
     OVERLAPPED overlap;
@@ -62,9 +64,9 @@ class Connection : public noncopyable,
   char write_buf_[kBufferSize];
   std::mutex sending_queue_mutex_;
   SendingQueue sending_queue_;
-  std::condition_variable sync_message_buffer_cond;
-  std::string sync_response_buffer_;
-  std::mutex sync_response_buffer_mutex_;
+  std::condition_variable transact_message_buffer_cond;
+  std::string transact_message_buffer_;
+  std::mutex transact_message_buffer_mutex_;
   IoCompletionRoutine io_overlap_;
   std::thread::id io_thread_id_;
   bool disconnecting_;
