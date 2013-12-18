@@ -95,7 +95,7 @@ std::string Connection::Name() const {
   return name_;
 }
 
-void Connection::Post(const std::string& message) {
+void Connection::Send(const std::string& message) {
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
     assert(message.size() < kBufferSize);
@@ -105,7 +105,7 @@ void Connection::Post(const std::string& message) {
   SetEvent(post_event_);
 }
 
-std::string Connection::Send(const std::string& message) {
+std::string Connection::TransactMessage(const std::string& message) {
   assert(io_thread_id_ != std::this_thread::get_id());
   std::unique_lock<std::mutex> lock(sync_response_buffer_mutex_);
   sync_message_buffer_cond.wait_for(

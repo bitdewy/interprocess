@@ -30,8 +30,8 @@ class Connection : public noncopyable,
     const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
   ~Connection();
   std::string Name() const;
-  void Post(const std::string& message);
-  std::string Send(const std::string& message);
+  void Send(const std::string& message);
+  std::string TransactMessage(const std::string& message);
   void Close();
   void SetCloseCallback(const CloseCallback& cb);
   Connection::StateE State() const;

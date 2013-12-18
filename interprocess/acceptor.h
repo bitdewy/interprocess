@@ -32,7 +32,7 @@ class Acceptor : public noncopyable {
 
   const std::string pipe_name_;
   std::thread listen_thread_;
-  std::map<int, std::function<bool()> > pendding_function_map_;
+  std::map<int, std::function<bool()>> pendding_function_map_;
   HANDLE next_pipe_;
   HANDLE close_event_;
   OVERLAPPED connect_overlap_;
