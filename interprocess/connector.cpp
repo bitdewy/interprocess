@@ -47,7 +47,8 @@ void Connector::MoveAsyncIOFunctionToAlertableThread(
   async_io_callback_ = cb;
 }
 
-void Connector::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
+void Connector::MoveWaitResponseIOFunctionToAlertableThread(
+  const std::function<void()>& cb) {
   async_wait_io_callback_ = cb;
 }
 

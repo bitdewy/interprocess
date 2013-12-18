@@ -59,7 +59,9 @@ VOID WINAPI CompletedWriteRoutine(
         self->state_ = Connection::CONNECTED;
       }
     }
-    io = pendding ? self->AsyncWrite(message, CompletedWriteRoutine) : self->AsyncRead(CompletedReadRoutine);
+    io = pendding ?
+      self->AsyncWrite(message, CompletedWriteRoutine) :
+      self->AsyncRead(CompletedReadRoutine);
   }
 
   if (!io) {

@@ -57,7 +57,8 @@ void Acceptor::MoveAsyncIOFunctionToAlertableThread(
   async_io_callback_ = cb;
 }
 
-void Acceptor::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
+void Acceptor::MoveWaitResponseIOFunctionToAlertableThread(
+  const std::function<void()>& cb) {
   async_wait_io_callback_ = cb;
 }
 

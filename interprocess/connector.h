@@ -22,7 +22,8 @@ class Connector : public noncopyable {
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
   void MoveAsyncIOFunctionToAlertableThread(const std::function<void()>& cb);
-  void MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb);
+  void MoveWaitResponseIOFunctionToAlertableThread(
+    const std::function<void()>& cb);
 
  private:
   HANDLE CreateConnectionInstance();

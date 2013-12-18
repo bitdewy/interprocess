@@ -72,11 +72,11 @@ class Connection : public noncopyable,
   bool disconnecting_;
 
   friend class ConnectionAttorney;
-  friend VOID WINAPI CompletedWriteRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
-  friend VOID WINAPI CompletedReadRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
-  friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
-  friend VOID WINAPI CompletedReadRoutine(DWORD, DWORD, LPOVERLAPPED);
 
+  friend VOID WINAPI CompletedReadRoutine(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedReadRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedWriteRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
 };
 
 class ConnectionAttorney {
