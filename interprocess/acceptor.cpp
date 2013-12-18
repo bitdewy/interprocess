@@ -58,7 +58,7 @@ void Acceptor::MoveAsyncIOFunctionToAlertableThread(
 }
 
 void Acceptor::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
-  sync_io_callback_ = cb;
+  async_wait_io_callback_ = cb;
 }
 
 void Acceptor::ListenInThread() {
@@ -105,7 +105,7 @@ void Acceptor::ListenInThread() {
         break;
 
       case WAIT_OBJECT_0 + 2:
-        call_if_exist(sync_io_callback_);
+        call_if_exist(async_wait_io_callback_);
         break;
 
       case WAIT_OBJECT_0 + 3:

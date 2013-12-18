@@ -40,9 +40,9 @@ class Connection : public noncopyable,
   void Shutdown();
   void SetMessageCallback(const MessageCallback& cb);
   HANDLE Handle() const;
-  bool AsyncRead();
+  bool AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb);
   bool AsyncWrite();
-  void WriteWaitResponse();
+  bool AsyncWaitWrite();
   bool AsyncWrite(
     const std::string& message, LPOVERLAPPED_COMPLETION_ROUTINE cb);
   typedef std::deque<std::string> SendingQueue;
@@ -72,8 +72,11 @@ class Connection : public noncopyable,
   bool disconnecting_;
 
   friend class ConnectionAttorney;
+  friend VOID WINAPI CompletedWriteRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
+  friend VOID WINAPI CompletedReadRoutineForWait(DWORD, DWORD, LPOVERLAPPED);
   friend VOID WINAPI CompletedWriteRoutine(DWORD, DWORD, LPOVERLAPPED);
   friend VOID WINAPI CompletedReadRoutine(DWORD, DWORD, LPOVERLAPPED);
+
 };
 
 class ConnectionAttorney {
@@ -91,6 +94,10 @@ class ConnectionAttorney {
 
   static void AsyncWrite(const ConnectionPtr& c) {
     c->AsyncWrite();
+  }
+
+  static void AsyncWaitWrite(const ConnectionPtr& c) {
+    c->AsyncWaitWrite();
   }
 };
 

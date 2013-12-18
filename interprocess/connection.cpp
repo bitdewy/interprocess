@@ -22,7 +22,7 @@ VOID WINAPI CompletedReadRoutine(
   bool io = false;
   if ((err == 0) && (readed != 0)) {
     auto message = std::string(self->read_buf_, readed);
-    io = self->AsyncRead();
+    io = self->AsyncRead(CompletedReadRoutine);
     if (!message.empty()) {
       self->message_callback_(self->shared_from_this(), message);
     }
@@ -59,8 +59,51 @@ VOID WINAPI CompletedWriteRoutine(
         self->state_ = Connection::CONNECTED;
       }
     }
-    auto cb = CompletedWriteRoutine;
-    io = pendding ? self->AsyncWrite(message, cb) : self->AsyncRead();
+    io = pendding ? self->AsyncWrite(message, CompletedWriteRoutine) : self->AsyncRead(CompletedReadRoutine);
+  }
+
+  if (!io) {
+    self->Shutdown();
+  }
+}
+
+VOID WINAPI CompletedReadRoutineForWait(
+  DWORD err, DWORD readed, LPOVERLAPPED overlap) {
+  auto context = (Connection::IoCompletionRoutine*)overlap;
+  auto self = context->self;
+
+  if (err == ERROR_OPERATION_ABORTED) {
+    SetEvent(self->cancel_io_event_);
+    return;
+  }
+  bool io = false;
+  if ((err == 0) && (readed != 0)) {
+    auto message = std::string(self->read_buf_, readed);
+    std::unique_lock<std::mutex> lock(self->transact_message_buffer_mutex_);
+    message.swap(self->transact_message_buffer_);
+    self->transact_message_buffer_cond.notify_all();
+    io = self->AsyncRead(CompletedReadRoutine);
+  }
+
+  if (!io) {
+    self->Shutdown();
+  }
+}
+
+VOID WINAPI CompletedWriteRoutineForWait(
+  DWORD err, DWORD written, LPOVERLAPPED overlap) {
+  auto context = (Connection::IoCompletionRoutine*)overlap;
+  auto self = context->self;
+  if (err == ERROR_OPERATION_ABORTED) {
+    SetEvent(self->cancel_io_event_);
+    assert(false);
+    return;
+  }
+  bool io = false;
+  // The write operation has finished, so read() the next request (if
+  // there is no error) or continue write if necessary.
+  if ((err == 0) && (written == self->write_size_)) {
+    io = self->AsyncRead(CompletedReadRoutineForWait);
   }
 
   if (!io) {
@@ -83,7 +126,7 @@ Connection::Connection(
   ZeroMemory(write_buf_, sizeof write_buf_);
   ZeroMemory(&io_overlap_, sizeof io_overlap_);
   io_overlap_.self = this;
-  AsyncRead();
+  AsyncRead(CompletedReadRoutine);
 }
 
 Connection::~Connection() {
@@ -152,7 +195,7 @@ HANDLE Connection::Handle() const {
   return pipe_;
 }
 
-bool Connection::AsyncRead() {
+bool Connection::AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb) {
   if (disconnecting_ && sending_queue_.empty()) {
     return false;
   }
@@ -162,7 +205,7 @@ bool Connection::AsyncRead() {
     read_buf_,
     kBufferSize * sizeof read_buf_[0],
     (LPOVERLAPPED)&io_overlap_,
-    (LPOVERLAPPED_COMPLETION_ROUTINE)CompletedReadRoutine);
+    cb);
   return !!read;
 }
 
@@ -182,6 +225,20 @@ bool Connection::AsyncWrite() {
     sending_queue_.pop_front();
   }
   return AsyncWrite(message, CompletedWriteRoutine);
+}
+
+bool Connection::AsyncWaitWrite() {
+  if (CancelIo(pipe_)) {
+    auto h = cancel_io_event_;
+    while (WAIT_OBJECT_0 != WaitForSingleObjectEx(h, INFINITE, TRUE)) {
+      continue;
+    }
+  }
+  std::string message;
+  std::unique_lock<std::mutex> lock(transact_message_buffer_mutex_);
+  message.swap(transact_message_buffer_);
+  transact_message_buffer_cond.notify_all();
+  return AsyncWrite(message, CompletedWriteRoutineForWait);
 }
 
 bool Connection::AsyncWrite(

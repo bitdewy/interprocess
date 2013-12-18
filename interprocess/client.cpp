@@ -28,7 +28,8 @@ class Client::Impl {
  private:
   void NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event);
   void ResetConnection(const ConnectionPtr& conn);
-  void SendInAlertableThread();
+  void AsyncWrite();
+  void AsyncWaitWrite();
 
   ConnectionPtr conn_;
   std::unique_ptr<Connector> connector_;
@@ -53,7 +54,9 @@ void Client::Impl::Connect(const std::string& server_name) {
     std::bind(&Client::Impl::NewConnection, this, _1, _2, _3));
   connector_->SetExceptionCallback(exception_callback_);
   connector_->MoveAsyncIOFunctionToAlertableThread(
-    std::bind(&Client::Impl::SendInAlertableThread, this));
+    std::bind(&Client::Impl::AsyncWrite, this));
+  connector_->MoveWaitResponseIOFunctionToAlertableThread(
+    std::bind(&Client::Impl::AsyncWaitWrite, this));
   connector_->Start();
 }
 
@@ -95,9 +98,15 @@ void Client::Impl::ResetConnection(const ConnectionPtr& conn) {
   conn_.reset();
 }
 
-void Client::Impl::SendInAlertableThread() {
+void Client::Impl::AsyncWrite() {
   if (conn_) {
     ConnectionAttorney::AsyncWrite(conn_);
+  }
+}
+
+void Client::Impl::AsyncWaitWrite() {
+  if (conn_) {
+    ConnectionAttorney::AsyncWaitWrite(conn_);
   }
 }
 

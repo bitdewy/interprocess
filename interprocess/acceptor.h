@@ -40,7 +40,7 @@ class Acceptor : public noncopyable {
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
-  std::function<void()> sync_io_callback_;
+  std::function<void()> async_wait_io_callback_;
 };
 
 }  // namespace interprocess

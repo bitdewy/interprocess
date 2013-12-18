@@ -48,7 +48,7 @@ void Connector::MoveAsyncIOFunctionToAlertableThread(
 }
 
 void Connector::MoveWaitResponseIOFunctionToAlertableThread(const std::function<void()>& cb) {
-  sync_io_callback_ = cb;
+  async_wait_io_callback_ = cb;
 }
 
 HANDLE Connector::CreateConnectionInstance() {
@@ -114,7 +114,7 @@ void Connector::ConnectInThread() {
         break;
 
       case WAIT_OBJECT_0 + 1:
-        call_if_exist(sync_io_callback_);
+        call_if_exist(async_wait_io_callback_);
         break;
 
       case WAIT_OBJECT_0 + 2:

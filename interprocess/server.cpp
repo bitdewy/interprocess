@@ -30,7 +30,8 @@ class Server::Impl {
  private:
   void NewConnection(HANDLE pipe, HANDLE post_event, HANDLE send_event);
   void RemoveConnection(const ConnectionPtr& conn);
-  void SendInAlertableThread();
+  void AsyncWrite();
+  void AsyncWaitWrite();
 
   ConnectionMap connection_map_;
   std::unique_ptr<Acceptor> acceptor_;
@@ -55,7 +56,9 @@ void Server::Impl::Listen() {
     std::bind(&Server::Impl::NewConnection, this, _1, _2, _3));
   acceptor_->SetExceptionCallback(exception_callback_);
   acceptor_->MoveAsyncIOFunctionToAlertableThread(
-    std::bind(&Server::Impl::SendInAlertableThread, this));
+    std::bind(&Server::Impl::AsyncWrite, this));
+  acceptor_->MoveWaitResponseIOFunctionToAlertableThread(
+    std::bind(&Server::Impl::AsyncWaitWrite, this));
   acceptor_->Listen();
 }
 
@@ -113,7 +116,7 @@ void Server::Impl::RemoveConnection(const ConnectionPtr& conn) {
 }
 
 
-void Server::Impl::SendInAlertableThread() {
+void Server::Impl::AsyncWrite() {
   std::for_each(std::begin(connection_map_),
                 std::end(connection_map_),
                 [](const std::pair<std::string, ConnectionPtr>& pair) {
@@ -121,6 +124,10 @@ void Server::Impl::SendInAlertableThread() {
       ConnectionAttorney::AsyncWrite(pair.second);
     }
   });
+}
+
+void Server::Impl::AsyncWaitWrite() {
+  assert(("server should not use async and wait", false));
 }
 
 // Server wrapper
