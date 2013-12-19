@@ -116,13 +116,6 @@ inline void raise_exception() {
   raise_exception_if([]() { return true; });
 }
 
-template <typename Function>
-inline void call_if_exist(Function f) {
-  if (f) {
-    f();
-  }
-}
-
 template <typename Function, typename... Arg>
 inline void call_if_exist(Function f, Arg... arg) {
   if (f) {
