@@ -17,7 +17,7 @@ class Client : public noncopyable {
  public:
   explicit Client(const std::string& name);
   ~Client();
-  void Connect(const std::string& server_name);
+  bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;
   ConnectionPtr Connection();
   void SetMessageCallback(const MessageCallback& callback);

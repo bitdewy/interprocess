@@ -35,7 +35,7 @@ void InThread() {
   client.SetMessageCallback(OnMessage);
   client.SetExceptionCallback(
     std::bind(OnException, &client, std::placeholders::_1));
-  client.Connect("mynamedpipe");
+  client.Connect("mynamedpipe", 1000);
   std::this_thread::sleep_for(std::chrono::seconds(1));
   
   auto response = client.Connection()->TransactMessage("async & wait");

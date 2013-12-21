@@ -18,7 +18,7 @@ class Client::Impl {
  public:
   explicit Impl(const std::string& name);
   ~Impl();
-  void Connect(const std::string& server_name);
+  bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;
   ConnectionPtr Connection();
   void SetMessageCallback(const MessageCallback& cb);
@@ -45,7 +45,7 @@ Client::Impl::Impl(const std::string& name)
 
 Client::Impl::~Impl() {}
 
-void Client::Impl::Connect(const std::string& server_name) {
+bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
@@ -58,6 +58,7 @@ void Client::Impl::Connect(const std::string& server_name) {
   connector_->MoveWaitResponseIOFunctionToAlertableThread(
     std::bind(&Client::Impl::AsyncWaitWrite, this));
   connector_->Start();
+  return false;
 }
 
 std::string Client::Impl::Name() const {
@@ -117,8 +118,8 @@ Client::Client(const std::string& name)
 
 Client::~Client() {}
 
-void Client::Connect(const std::string& server_name) {
-  impl_->Connect(server_name);
+bool Client::Connect(const std::string& server_name, int milliseconds) {
+  return impl_->Connect(server_name, milliseconds);
 }
 
 std::string Client::Name() const {
