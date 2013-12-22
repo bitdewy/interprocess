@@ -6,6 +6,7 @@
 
 #include "interprocess/client.h"
 #include <windows.h>
+#include <condition_variable>
 #include <memory>
 #include <string>
 #include <utility>
@@ -34,6 +35,7 @@ class Client::Impl {
   ConnectionPtr conn_;
   std::unique_ptr<Connector> connector_;
   std::string name_;
+  std::condition_variable connected_cond_;
   MessageCallback message_callback_;
   ExceptionCallback exception_callback_;
 };
