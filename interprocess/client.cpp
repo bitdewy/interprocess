@@ -35,6 +35,8 @@ class Client::Impl {
   ConnectionPtr conn_;
   std::unique_ptr<Connector> connector_;
   std::string name_;
+  bool connected_;
+  std::mutex connected_mutex_;
   std::condition_variable connected_cond_;
   MessageCallback message_callback_;
   ExceptionCallback exception_callback_;
@@ -43,7 +45,8 @@ class Client::Impl {
 // real implement of Client
 
 Client::Impl::Impl(const std::string& name)
-  : name_(name) {}
+  : name_(name),
+    connected_(false) {}
 
 Client::Impl::~Impl() {}
 
@@ -60,7 +63,11 @@ bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
   connector_->MoveWaitResponseIOFunctionToAlertableThread(
     std::bind(&Client::Impl::AsyncWaitWrite, this));
   connector_->Start();
-  return false;
+  std::unique_lock<std::mutex> lock(connected_mutex_);
+  return connected_cond_.wait_for(
+    lock, std::chrono::milliseconds(milliseconds), [this]() {
+    return connected_;
+  });
 }
 
 std::string Client::Impl::Name() const {
@@ -93,16 +100,20 @@ void Client::Impl::NewConnection(
   conn_->SetCloseCallback(
     std::bind(&Client::Impl::ResetConnection, this, _1));
   ConnectionAttorney::SetMessageCallback(conn_, message_callback_);
-  // FIXME: null std::exception_ptr means connected
-  exception_callback_(std::exception_ptr());
+  std::unique_lock<std::mutex> lock(connected_mutex_);
+  connected_ = true;
+  connected_cond_.notify_all();
 }
 
 void Client::Impl::ResetConnection(const ConnectionPtr& conn) {
   conn_.reset();
+  std::unique_lock<std::mutex> lock(connected_mutex_);
+  connected_ = false;
+  connected_cond_.notify_all();
 }
 
 void Client::Impl::AsyncWrite() {
-  if (conn_) {
+  if (conn_ && conn_->State() == Connection::SEND_PENDDING) {
     ConnectionAttorney::AsyncWrite(conn_);
   }
 }
