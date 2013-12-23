@@ -35,13 +35,15 @@ void InThread() {
   client.SetMessageCallback(OnMessage);
   client.SetExceptionCallback(
     std::bind(OnException, &client, std::placeholders::_1));
-  client.Connect("mynamedpipe");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  
-  auto response = client.Connection()->TransactMessage("async & wait");
-  printf("TransactMessage response: %s\n", response.c_str());
-  std::this_thread::sleep_for(std::chrono::seconds(10));
-  client.Stop();
+  if (client.Connect("mynamedpipe", 1000)) {
+    auto response = client.Connection()->TransactMessage("async & wait");
+    printf("TransactMessage response: %s\n", response.c_str());
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    client.Connection()->Send(client.Name());
+    client.Connection()->Send("abcdefghijklmnopqrstuvwxyz");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    client.Stop();
+  }
 }
 
 int main() {
