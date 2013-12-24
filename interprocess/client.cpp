@@ -129,7 +129,20 @@ void Client::Impl::AsyncWaitWrite() {
 Client::Client(const std::string& name)
   : impl_(new Impl(name)) {}
 
+Client::Client(Client&& other) {
+  swap(other);
+}
+
+Client& Client::operator = (Client&& other) {
+  swap(other);
+  return *this;
+}
+
 Client::~Client() {}
+
+void Client::swap(Client& other) {
+  impl_.swap(other.impl_);
+}
 
 bool Client::Connect(const std::string& server_name, int milliseconds) {
   return impl_->Connect(server_name, milliseconds);

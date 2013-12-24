@@ -17,7 +17,7 @@ void OnMessage(
 }
 
 int main() {
-  interprocess::Server server("mynamedpipe");
+  auto server = interprocess::Server("mynamedpipe");
   server.SetMessageCallback(OnMessage);
   server.Listen();
   std::this_thread::sleep_for(std::chrono::hours(30));

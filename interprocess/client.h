@@ -17,8 +17,11 @@ class Client {
  public:
   explicit Client(const std::string& name);
   Client(const Client&) = delete;
+  Client(Client&& other);
   Client& operator=(const Client&) = delete;
+  Client& operator=(Client&& other);
   ~Client();
+  void swap(Client& other);
   bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;
   ConnectionPtr Connection();

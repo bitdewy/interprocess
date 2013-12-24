@@ -20,6 +20,7 @@ class Server::Impl {
   typedef std::map<std::string, ConnectionPtr> ConnectionMap;
   explicit Impl(const std::string& endpoint);
   ~Impl();
+  void swap();
   void Listen();
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
@@ -115,7 +116,6 @@ void Server::Impl::RemoveConnection(const ConnectionPtr& conn) {
   connection_map_.erase(conn->Name());
 }
 
-
 void Server::Impl::AsyncWrite() {
   std::for_each(std::begin(connection_map_),
                 std::end(connection_map_),
@@ -135,7 +135,20 @@ void Server::Impl::AsyncWaitWrite() {
 Server::Server(const std::string& name)
   : impl_(new Impl(name)) {}
 
+Server::Server(Server&& other) {
+  swap(other);
+}
+
+Server& Server::operator=(Server&& other) {
+  swap(other);
+  return *this;
+}
+
 Server::~Server() {}
+
+void Server::swap(Server& other) {
+  impl_.swap(other.impl_);
+}
 
 void Server::Listen() {
   impl_->Listen();

@@ -17,8 +17,11 @@ class Server {
  public:
   explicit Server(const std::string& endpoint);
   Server(const Server&) = delete;
+  Server(Server&& other);
   Server& operator=(const Server&) = delete;
+  Server& operator=(Server&& other);
   ~Server();
+  void swap(Server& other);
   void Listen();
   void Stop();
   void SetMessageCallback(const MessageCallback& cb);
