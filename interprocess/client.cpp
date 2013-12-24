@@ -18,7 +18,9 @@ namespace interprocess {
 class Client::Impl {
  public:
   explicit Impl(const std::string& name);
-  ~Impl();
+  Impl(const Impl&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  ~Impl() = default;
   bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;
   ConnectionPtr Connection();
@@ -47,8 +49,6 @@ class Client::Impl {
 Client::Impl::Impl(const std::string& name)
   : name_(name),
     connected_(false) {}
-
-Client::Impl::~Impl() {}
 
 bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
   using std::placeholders::_1;

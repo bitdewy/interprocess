@@ -18,8 +18,7 @@
 
 namespace interprocess {
 
-class Connection : public noncopyable,
-                   public std::enable_shared_from_this<Connection> {
+class Connection : public std::enable_shared_from_this<Connection> {
  public:
   enum StateE {
     UNKNOW,
@@ -28,6 +27,8 @@ class Connection : public noncopyable,
   };
   Connection(
     const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
+  Connection(const Connection&) = delete;
+  Connection& operator=(const Connection&) = delete;
   ~Connection();
   std::string Name() const;
   void Send(const std::string& message);

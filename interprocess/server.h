@@ -13,9 +13,11 @@
 
 namespace interprocess {
 
-class Server : public noncopyable {
+class Server {
  public:
   explicit Server(const std::string& endpoint);
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
   ~Server();
   void Listen();
   void Stop();

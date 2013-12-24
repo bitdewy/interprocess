@@ -13,9 +13,11 @@
 
 namespace interprocess {
 
-class Connector : public noncopyable {
+class Connector {
  public:
   explicit Connector(const std::string& endpoint);
+  Connector(const Connector&) = delete;
+  Connector& operator=(const Connector&) = delete;
   ~Connector();
   void Start();
   void Stop();

@@ -15,9 +15,11 @@
 
 namespace interprocess {
 
-class Acceptor : public noncopyable {
+class Acceptor {
  public:
   explicit Acceptor(const std::string& endpoint);
+  Acceptor(const Acceptor&) = delete;
+  Acceptor& operator=(const Acceptor&) = delete;
   ~Acceptor();
   void Listen();
   void Stop();

@@ -13,9 +13,11 @@
 
 namespace interprocess {
 
-class Client : public noncopyable {
+class Client {
  public:
   explicit Client(const std::string& name);
+  Client(const Client&) = delete;
+  Client& operator=(const Client&) = delete;
   ~Client();
   bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;

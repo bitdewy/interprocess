@@ -16,30 +16,12 @@
 
 namespace interprocess {
 
-// taken from boost.noncopyable
-// http://www.boost.org/doc/libs/1_54_0/boost/noncopyable.hpp
-
-namespace noncopyable_ {  // protection from unintended ADL
-
-class noncopyable {
- protected:
-  noncopyable() {}
-  ~noncopyable() {}
-
- private:  // emphasize the following members are private
-  noncopyable(const noncopyable&);
-  noncopyable& operator=(const noncopyable&);
-};
-
-}  // namespace noncopyable_
-
-typedef noncopyable_::noncopyable noncopyable;
-
-class ScopeGuard : public noncopyable {
+class ScopeGuard {
  public:
   explicit ScopeGuard(std::function<void()> on_exit_scope)
     : on_exit_scope_(on_exit_scope) {}
-
+  ScopeGuard(const ScopeGuard&) = delete;
+  ScopeGuard& operator=(const ScopeGuard&) = delete;
   ~ScopeGuard() {
     if (!dismissed_) {
       on_exit_scope_();
