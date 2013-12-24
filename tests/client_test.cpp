@@ -31,7 +31,7 @@ void OnException(interprocess::Client* c, const std::exception_ptr& eptr) {
 
 void InThread() {
   auto name = std::to_string(std::this_thread::get_id().hash());
-  auto client = interprocess::Client(name);
+  interprocess::Client client(name);
   client.SetMessageCallback(OnMessage);
   client.SetExceptionCallback(
     std::bind(OnException, &client, std::placeholders::_1));
