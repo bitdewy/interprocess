@@ -4,7 +4,7 @@
 //
 //  http://www.boost.org/LICENSE_1_0.txt
 
-#include <thread>
+#include <ppltasks.h>
 #include <algorithm>
 #include <string>
 #include "interprocess/client.h"
@@ -41,18 +41,17 @@ void InThread() {
     std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Connection()->Send(client.Name());
     client.Connection()->Send("abcdefghijklmnopqrstuvwxyz");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     client.Stop();
   }
 }
 
 int main() {
-  std::thread threads[1];
-  for (auto i = 0; i < sizeof threads / sizeof threads[0]; ++i) {
-    threads[i].swap(std::thread(InThread));
+  Concurrency::task_group tasks;
+  int count = 10;
+  while (count--) {
+    tasks.run(std::function<void()>(InThread));
   }
-  for (auto i = 0; i < sizeof threads / sizeof threads[0]; ++i) {
-    threads[i].join();
-  }
+  tasks.wait();
   return 0;
 }

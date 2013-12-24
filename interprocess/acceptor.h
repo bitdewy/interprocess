@@ -8,7 +8,7 @@
 #define INTERPROCESS_ACCEPTOR_H_
 
 #include <windows.h>
-#include <thread>
+#include <ppltasks.h>
 #include <map>
 #include <string>
 #include "interprocess/types.h"
@@ -35,7 +35,7 @@ class Acceptor {
   bool Pendding(int err);
 
   const std::string pipe_name_;
-  std::thread listen_thread_;
+  Concurrency::task<void> listen_thread_;
   std::map<int, std::function<bool()>> pendding_function_map_;
   HANDLE next_pipe_;
   HANDLE close_event_;

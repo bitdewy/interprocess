@@ -7,7 +7,7 @@
 #ifndef INTERPROCESS_CONNECTOR_H_
 #define INTERPROCESS_CONNECTOR_H_
 
-#include <thread>
+#include <ppltasks.h>
 #include <string>
 #include "interprocess/types.h"
 
@@ -32,7 +32,7 @@ class Connector {
   void ConnectInThread();
 
   std::string pipe_name_;
-  std::thread connect_thread_;
+  Concurrency::task<void> connect_thread_;
   HANDLE close_event_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
