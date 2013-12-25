@@ -23,13 +23,15 @@ Connector::~Connector() {
 }
 
 void Connector::Start() {
-  connect_thread_ = Concurrency::create_task(
-    std::function<void()>(std::bind(&Connector::ConnectInThread, this)));
+  connect_thread_.swap(
+    std::thread(std::bind(&Connector::ConnectInThread, this)));
 }
 
 void Connector::Stop() {
   SetEvent(close_event_);
-  connect_thread_.wait();
+  if (connect_thread_.joinable()) {
+    connect_thread_.join();
+  }
 }
 
 void Connector::SetNewConnectionCallback(const NewConnectionCallback& cb) {

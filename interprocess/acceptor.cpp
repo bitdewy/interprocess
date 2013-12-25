@@ -32,14 +32,15 @@ Acceptor::~Acceptor() {
 }
 
 void Acceptor::Listen() {
-  listen_thread_ = Concurrency::create_task(
-    std::function<void()>(std::bind(&Acceptor::ListenInThread, this)));
+  listen_thread_.swap(std::thread(std::bind(&Acceptor::ListenInThread, this)));
 }
 
 void Acceptor::Stop() {
   SetEvent(close_event_);
   DisconnectNamedPipe(next_pipe_);
-  listen_thread_.wait();
+  if (listen_thread_.joinable()) {
+    listen_thread_.join();
+  }
 }
 
 void Acceptor::SetNewConnectionCallback(const NewConnectionCallback& cb) {
