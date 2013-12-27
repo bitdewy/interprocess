@@ -6,6 +6,7 @@
 
 #include "interprocess/client.h"
 #include <windows.h>
+#include <algorithm>
 #include <condition_variable>
 #include <memory>
 #include <string>

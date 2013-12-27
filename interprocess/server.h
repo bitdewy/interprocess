@@ -7,6 +7,7 @@
 #ifndef INTERPROCESS_SERVER_H_
 #define INTERPROCESS_SERVER_H_
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include "interprocess/types.h"

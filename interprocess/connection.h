@@ -9,11 +9,11 @@
 
 #include <windows.h>
 #include <condition_variable>
-#include <thread>
+#include <deque>
 #include <mutex>
 #include <memory>
 #include <string>
-#include <deque>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
@@ -85,7 +85,8 @@ class ConnectionAttorney {
   friend class Client;
 
  private:
-  static void SetMessageCallback(ConnectionPtr& c, const MessageCallback& cb) {
+  static void SetMessageCallback(
+    const ConnectionPtr& c, const MessageCallback& cb) {
     c->SetMessageCallback(cb);
   }
 

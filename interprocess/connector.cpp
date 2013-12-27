@@ -14,7 +14,7 @@ namespace interprocess {
 Connector::Connector(const std::string& endpoint)
   : pipe_name_(std::string("\\\\.\\pipe\\").append(endpoint)),
     close_event_(CreateEvent(NULL, FALSE, FALSE, NULL)) {
-  assert(close_event_ != NULL);
+  assert(("CreateEvent (close event) failed", close_event_ != NULL));
 }
 
 Connector::~Connector() {

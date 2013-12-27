@@ -127,7 +127,7 @@ void Server::Impl::AsyncWrite() {
 }
 
 void Server::Impl::AsyncWaitWrite() {
-  assert(("server should not use async and wait", false));
+  assert(("server should not use async + timeout", false));
 }
 
 // Server wrapper

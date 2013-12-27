@@ -7,8 +7,8 @@
 #ifndef INTERPROCESS_CONNECTOR_H_
 #define INTERPROCESS_CONNECTOR_H_
 
-#include <thread>
 #include <string>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
