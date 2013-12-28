@@ -23,6 +23,7 @@ Connector::~Connector() {
 }
 
 void Connector::Start() {
+  // TODO(bitdewy): connect first, then into async read mode
   connect_thread_.swap(
     std::thread(std::bind(&Connector::ConnectInThread, this)));
 }
