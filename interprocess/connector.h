@@ -7,6 +7,7 @@
 #ifndef INTERPROCESS_CONNECTOR_H_
 #define INTERPROCESS_CONNECTOR_H_
 
+#include <ppltasks.h>
 #include <string>
 #include <thread>
 #include "interprocess/types.h"
@@ -19,7 +20,8 @@ class Connector {
   Connector(const Connector&) = delete;
   Connector& operator=(const Connector&) = delete;
   ~Connector();
-  void Start();
+  void Connect();
+  void Establish();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);

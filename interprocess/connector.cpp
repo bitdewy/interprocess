@@ -22,7 +22,10 @@ Connector::~Connector() {
   CloseHandle(close_event_);
 }
 
-void Connector::Start() {
+void Connector::Connect() {
+}
+
+void Connector::Establish() {
   // TODO(bitdewy): connect first, then into async read mode
   connect_thread_.swap(
     std::thread(std::bind(&Connector::ConnectInThread, this)));
