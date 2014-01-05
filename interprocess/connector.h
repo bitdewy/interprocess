@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -7,8 +7,9 @@
 #ifndef INTERPROCESS_CONNECTOR_H_
 #define INTERPROCESS_CONNECTOR_H_
 
-#include <thread>
+#include <ppltasks.h>
 #include <string>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
@@ -19,7 +20,8 @@ class Connector {
   Connector(const Connector&) = delete;
   Connector& operator=(const Connector&) = delete;
   ~Connector();
-  void Start();
+  void Connect();
+  void Establish();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);

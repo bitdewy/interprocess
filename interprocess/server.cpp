@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -127,7 +127,7 @@ void Server::Impl::AsyncWrite() {
 }
 
 void Server::Impl::AsyncWaitWrite() {
-  assert(("server should not use async and wait", false));
+  assert(("server should not use async + timeout", false));
 }
 
 // Server wrapper

@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -6,6 +6,7 @@
 
 #include "interprocess/client.h"
 #include <windows.h>
+#include <algorithm>
 #include <condition_variable>
 #include <memory>
 #include <string>
@@ -62,7 +63,7 @@ bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
     std::bind(&Client::Impl::AsyncWrite, this));
   connector_->MoveWaitResponseIOFunctionToAlertableThread(
     std::bind(&Client::Impl::AsyncWaitWrite, this));
-  connector_->Start();
+  connector_->Connect();
   std::unique_lock<std::mutex> lock(connected_mutex_);
   return connected_cond_.wait_for(
     lock, std::chrono::milliseconds(milliseconds), [this]() {

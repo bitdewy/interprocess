@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -14,7 +14,7 @@ namespace interprocess {
 Connector::Connector(const std::string& endpoint)
   : pipe_name_(std::string("\\\\.\\pipe\\").append(endpoint)),
     close_event_(CreateEvent(NULL, FALSE, FALSE, NULL)) {
-  assert(close_event_ != NULL);
+  assert(("CreateEvent (close event) failed", close_event_ != NULL));
 }
 
 Connector::~Connector() {
@@ -22,7 +22,11 @@ Connector::~Connector() {
   CloseHandle(close_event_);
 }
 
-void Connector::Start() {
+void Connector::Connect() {
+}
+
+void Connector::Establish() {
+  // TODO(bitdewy): connect first, then into async read mode
   connect_thread_.swap(
     std::thread(std::bind(&Connector::ConnectInThread, this)));
 }

@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -39,7 +39,7 @@ VOID WINAPI CompletedWriteRoutine(
   auto self = context->self;
   if (err == ERROR_OPERATION_ABORTED) {
     SetEvent(self->cancel_io_event_);
-    assert(false);
+    assert(("write operation should not be cancelled", false));
     return;
   }
   bool io = false;
@@ -98,7 +98,7 @@ VOID WINAPI CompletedWriteRoutineForWait(
   auto self = context->self;
   if (err == ERROR_OPERATION_ABORTED) {
     SetEvent(self->cancel_io_event_);
-    assert(false);
+    assert(("write operation should not be cancelled", false));
     return;
   }
   bool io = false;
@@ -144,7 +144,7 @@ std::string Connection::Name() const {
 void Connection::Send(const std::string& message) {
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
-    assert(message.size() < kBufferSize);
+    assert(("message buffer overflow", message.size() < kBufferSize));
     sending_queue_.push_back(message);
     state_ = SEND_PENDDING;
   }
@@ -222,7 +222,7 @@ bool Connection::AsyncWrite() {
   std::string message;
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
-    assert(!sending_queue_.empty());
+    assert(("no more message to send", !sending_queue_.empty()));
     message = sending_queue_.front();
     sending_queue_.pop_front();
   }
