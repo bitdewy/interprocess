@@ -31,7 +31,7 @@ void Connector::Establish() {
 }
 
 void Connector::Stop() {
-  SetEvent(close_event_);
+  SetEvent(close_event_.get());
   if (connect_thread_.joinable()) {
     connect_thread_.join();
   }
@@ -102,7 +102,7 @@ void Connector::ConnectInThread() {
 
     call_if_exist(new_connection_callback_, pipe, post_event, send_event);
 
-    HANDLE events[3] = { post_event, send_event, close_event_ };
+    HANDLE events[3] = { post_event, send_event, close_event_.get() };
 
     while (true) {
       auto wait = WaitForMultipleObjectsEx(

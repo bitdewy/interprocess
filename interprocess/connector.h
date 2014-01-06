@@ -35,7 +35,7 @@ class Connector {
 
   std::string pipe_name_;
   std::thread connect_thread_;
-  HANDLE close_event_;
+  handle close_event_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;
