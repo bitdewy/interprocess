@@ -13,6 +13,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include "interprocess/unique_handle.h"
 
 namespace interprocess {
 
@@ -104,6 +105,17 @@ inline void call_if_exist(Function f, Arg... arg) {
     f(std::forward<Arg>(arg)...);
   }
 }
+
+struct handle_traits {
+  static HANDLE invalid() {
+    return nullptr;
+  }
+  static void close(HANDLE handle) {
+    CloseHandle(handle);
+  }
+};
+
+typedef unique_handle<HANDLE, handle_traits> handle;
 
 }  // namespace interprocess
 
