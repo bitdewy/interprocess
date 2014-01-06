@@ -19,7 +19,6 @@ Connector::Connector(const std::string& endpoint)
 
 Connector::~Connector() {
   Stop();
-  CloseHandle(close_event_);
 }
 
 void Connector::Connect() {

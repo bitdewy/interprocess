@@ -37,8 +37,8 @@ class Acceptor {
   const std::string pipe_name_;
   std::thread listen_thread_;
   std::map<int, std::function<bool()>> pendding_function_map_;
-  HANDLE next_pipe_;
-  HANDLE close_event_;
+  handle next_pipe_;
+  handle close_event_;
   OVERLAPPED connect_overlap_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;

@@ -27,8 +27,6 @@ Acceptor::Acceptor(const std::string& endpoint)
 
 Acceptor::~Acceptor() {
   Stop();
-  CloseHandle(next_pipe_);
-  CloseHandle(close_event_);
 }
 
 void Acceptor::Listen() {
@@ -36,8 +34,8 @@ void Acceptor::Listen() {
 }
 
 void Acceptor::Stop() {
-  SetEvent(close_event_);
-  DisconnectNamedPipe(next_pipe_);
+  SetEvent(close_event_.get());
+  DisconnectNamedPipe(next_pipe_.get());
   if (listen_thread_.joinable()) {
     listen_thread_.join();
   }
@@ -68,7 +66,7 @@ void Acceptor::ListenInThread() {
     SECURITY_CREATE_EVENT(post_event, FALSE, FALSE);
     SECURITY_CREATE_EVENT(send_event, FALSE, FALSE);
 
-    HANDLE events[4] = { conn_event, post_event, send_event, close_event_ };
+    HANDLE events[4] = { conn_event, post_event, send_event, close_event_.get() };
     connect_overlap_.hEvent = conn_event;
     bool pendding = CreateConnectInstance();
 
@@ -88,14 +86,14 @@ void Acceptor::ListenInThread() {
           raise_exception_if([&, this]() {
             DWORD ret = 0;
             return !GetOverlappedResult(
-              next_pipe_,         // pipe handle
+              next_pipe_.get(),         // pipe handle
               &connect_overlap_,  // OVERLAPPED structure
               &ret,               // bytes transferred
               FALSE);             // does not wait
           });
         }
         call_if_exist(
-          new_connection_callback_, next_pipe_, post_event, send_event);
+          new_connection_callback_, next_pipe_.get(), post_event, send_event);
         pendding = CreateConnectInstance();
         break;
 
@@ -130,7 +128,7 @@ void Acceptor::ListenInThread() {
 }
 
 bool Acceptor::CreateConnectInstance() {
-  next_pipe_ = CreateNamedPipe(
+  next_pipe_.reset(CreateNamedPipe(
     pipe_name_.c_str(),        // pipe name
     PIPE_ACCESS_DUPLEX |       // read/write access
     FILE_FLAG_OVERLAPPED,      // overlapped mode
@@ -141,13 +139,13 @@ bool Acceptor::CreateConnectInstance() {
     kBufferSize,               // output buffer size
     kBufferSize,               // input buffer size
     kTimeout,                  // client time-out
-    NULL);                     // default security attributes
+    NULL));                    // default security attributes
 
-  raise_exception_if([this]() { return next_pipe_ == INVALID_HANDLE_VALUE; });
+  raise_exception_if([this]() { return next_pipe_.get() == INVALID_HANDLE_VALUE; });
 
   // Overlapped ConnectNamedPipe should return zero.
   raise_exception_if([this]() {
-    return ConnectNamedPipe(next_pipe_, &connect_overlap_);
+    return ConnectNamedPipe(next_pipe_.get(), &connect_overlap_);
   });
 
   return Pendding(GetLastError());

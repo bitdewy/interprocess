@@ -77,6 +77,7 @@
     <ClInclude Include="..\..\interprocess\connector.h" />
     <ClInclude Include="..\..\interprocess\server.h" />
     <ClInclude Include="..\..\interprocess\types.h" />
+    <ClInclude Include="..\..\interprocess\unique_handle.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\interprocess\acceptor.cpp" />

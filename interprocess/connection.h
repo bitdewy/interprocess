@@ -56,10 +56,10 @@ class Connection : public std::enable_shared_from_this<Connection> {
   MessageCallback message_callback_;
   std::string name_;
   StateE state_;
-  HANDLE pipe_;
-  HANDLE post_event_;
-  HANDLE send_event_;
-  HANDLE cancel_io_event_;
+  handle pipe_;
+  handle post_event_;
+  handle send_event_;
+  handle cancel_io_event_;
   DWORD write_size_;
   char read_buf_[kBufferSize];
   char write_buf_[kBufferSize];
