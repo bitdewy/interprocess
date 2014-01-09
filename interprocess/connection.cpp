@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -16,7 +16,7 @@ VOID WINAPI CompletedReadRoutine(
   auto self = context->self;
 
   if (err == ERROR_OPERATION_ABORTED) {
-    SetEvent(self->cancel_io_event_);
+    SetEvent(self->cancel_io_event_.get());
     return;
   }
   bool io = false;
@@ -38,8 +38,8 @@ VOID WINAPI CompletedWriteRoutine(
   auto context = (Connection::IoCompletionRoutine*)overlap;
   auto self = context->self;
   if (err == ERROR_OPERATION_ABORTED) {
-    SetEvent(self->cancel_io_event_);
-    assert(false);
+    SetEvent(self->cancel_io_event_.get());
+    assert(("write operation should not be cancelled", false));
     return;
   }
   bool io = false;
@@ -75,7 +75,7 @@ VOID WINAPI CompletedReadRoutineForWait(
   auto self = context->self;
 
   if (err == ERROR_OPERATION_ABORTED) {
-    SetEvent(self->cancel_io_event_);
+    SetEvent(self->cancel_io_event_.get());
     return;
   }
   bool io = false;
@@ -97,8 +97,8 @@ VOID WINAPI CompletedWriteRoutineForWait(
   auto context = (Connection::IoCompletionRoutine*)overlap;
   auto self = context->self;
   if (err == ERROR_OPERATION_ABORTED) {
-    SetEvent(self->cancel_io_event_);
-    assert(false);
+    SetEvent(self->cancel_io_event_.get());
+    assert(("write operation should not be cancelled", false));
     return;
   }
   bool io = false;
@@ -132,9 +132,7 @@ Connection::Connection(
 }
 
 Connection::~Connection() {
-  CancelIo(pipe_);
-  CloseHandle(pipe_);
-  CloseHandle(cancel_io_event_);
+  CancelIo(pipe_.get());
 }
 
 std::string Connection::Name() const {
@@ -144,18 +142,18 @@ std::string Connection::Name() const {
 void Connection::Send(const std::string& message) {
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
-    assert(message.size() < kBufferSize);
+    assert(("message buffer overflow", message.size() < kBufferSize));
     sending_queue_.push_back(message);
     state_ = SEND_PENDDING;
   }
-  SetEvent(post_event_);
+  SetEvent(post_event_.get());
 }
 
 std::string Connection::TransactMessage(std::string message) {
   assert(io_thread_id_ != std::this_thread::get_id() && message.size());
   std::unique_lock<std::mutex> lock(transact_message_buffer_mutex_);
   message.swap(transact_message_buffer_);
-  SetEvent(send_event_);
+  SetEvent(send_event_.get());
   transact_message_buffer_cond.wait(lock, [this]() {
     return transact_message_buffer_.empty();
   });
@@ -194,7 +192,7 @@ void Connection::SetMessageCallback(const MessageCallback& cb) {
 }
 
 HANDLE Connection::Handle() const {
-  return pipe_;
+  return pipe_.get();
 }
 
 bool Connection::AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb) {
@@ -203,7 +201,7 @@ bool Connection::AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb) {
   }
   ZeroMemory(read_buf_, sizeof read_buf_);
   auto read = ReadFileEx(
-    pipe_,
+    pipe_.get(),
     read_buf_,
     kBufferSize * sizeof read_buf_[0],
     (LPOVERLAPPED)&io_overlap_,
@@ -213,16 +211,16 @@ bool Connection::AsyncRead(LPOVERLAPPED_COMPLETION_ROUTINE cb) {
 
 bool Connection::AsyncWrite() {
   // must cancel read operation first
-  if (CancelIo(pipe_)) {
-    auto h = cancel_io_event_;
-    while (WAIT_OBJECT_0 != WaitForSingleObjectEx(h, INFINITE, TRUE)) {
+  if (CancelIo(pipe_.get())) {
+    while (WAIT_OBJECT_0 != WaitForSingleObjectEx(
+      cancel_io_event_.get(), INFINITE, TRUE)) {
       continue;
     }
   }
   std::string message;
   {
     std::unique_lock<std::mutex> lock(sending_queue_mutex_);
-    assert(!sending_queue_.empty());
+    assert(("no more message to send", !sending_queue_.empty()));
     message = sending_queue_.front();
     sending_queue_.pop_front();
   }
@@ -230,9 +228,9 @@ bool Connection::AsyncWrite() {
 }
 
 bool Connection::AsyncWaitWrite() {
-  if (CancelIo(pipe_)) {
-    auto h = cancel_io_event_;
-    while (WAIT_OBJECT_0 != WaitForSingleObjectEx(h, INFINITE, TRUE)) {
+  if (CancelIo(pipe_.get())) {
+    while (WAIT_OBJECT_0 != WaitForSingleObjectEx(
+      cancel_io_event_.get(), INFINITE, TRUE)) {
       continue;
     }
   }
@@ -252,7 +250,7 @@ bool Connection::AsyncWrite(
 #pragma warning(default:4996)
 
   auto write = WriteFileEx(
-    pipe_,
+    pipe_.get(),
     write_buf_,
     write_size_,
     (LPOVERLAPPED)&io_overlap_,

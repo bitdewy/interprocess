@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -6,6 +6,7 @@
 
 #include "interprocess/client.h"
 #include <windows.h>
+#include <algorithm>
 #include <condition_variable>
 #include <memory>
 #include <string>
@@ -18,7 +19,9 @@ namespace interprocess {
 class Client::Impl {
  public:
   explicit Impl(const std::string& name);
-  ~Impl();
+  Impl(const Impl&) = delete;
+  Impl& operator=(const Impl&) = delete;
+  ~Impl() = default;
   bool Connect(const std::string& server_name, int milliseconds);
   std::string Name() const;
   ConnectionPtr Connection();
@@ -48,8 +51,6 @@ Client::Impl::Impl(const std::string& name)
   : name_(name),
     connected_(false) {}
 
-Client::Impl::~Impl() {}
-
 bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -62,7 +63,7 @@ bool Client::Impl::Connect(const std::string& server_name, int milliseconds) {
     std::bind(&Client::Impl::AsyncWrite, this));
   connector_->MoveWaitResponseIOFunctionToAlertableThread(
     std::bind(&Client::Impl::AsyncWaitWrite, this));
-  connector_->Start();
+  connector_->Connect();
   std::unique_lock<std::mutex> lock(connected_mutex_);
   return connected_cond_.wait_for(
     lock, std::chrono::milliseconds(milliseconds), [this]() {
@@ -129,7 +130,20 @@ void Client::Impl::AsyncWaitWrite() {
 Client::Client(const std::string& name)
   : impl_(new Impl(name)) {}
 
+Client::Client(Client&& other) {
+  swap(other);
+}
+
+Client& Client::operator = (Client&& other) {
+  swap(other);
+  return *this;
+}
+
 Client::~Client() {}
+
+void Client::swap(Client& other) {
+  impl_.swap(other.impl_);
+}
 
 bool Client::Connect(const std::string& server_name, int milliseconds) {
   return impl_->Connect(server_name, milliseconds);

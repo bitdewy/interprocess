@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -9,17 +9,16 @@
 
 #include <windows.h>
 #include <condition_variable>
-#include <thread>
+#include <deque>
 #include <mutex>
 #include <memory>
 #include <string>
-#include <deque>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
 
-class Connection : public noncopyable,
-                   public std::enable_shared_from_this<Connection> {
+class Connection : public std::enable_shared_from_this<Connection> {
  public:
   enum StateE {
     UNKNOW,
@@ -28,6 +27,8 @@ class Connection : public noncopyable,
   };
   Connection(
     const std::string& name, HANDLE pipe, HANDLE post_event, HANDLE send_event);
+  Connection(const Connection&) = delete;
+  Connection& operator=(const Connection&) = delete;
   ~Connection();
   std::string Name() const;
   void Send(const std::string& message);
@@ -55,10 +56,10 @@ class Connection : public noncopyable,
   MessageCallback message_callback_;
   std::string name_;
   StateE state_;
-  HANDLE pipe_;
-  HANDLE post_event_;
-  HANDLE send_event_;
-  HANDLE cancel_io_event_;
+  handle pipe_;
+  handle post_event_;
+  handle send_event_;
+  handle cancel_io_event_;
   DWORD write_size_;
   char read_buf_[kBufferSize];
   char write_buf_[kBufferSize];
@@ -84,7 +85,8 @@ class ConnectionAttorney {
   friend class Client;
 
  private:
-  static void SetMessageCallback(ConnectionPtr& c, const MessageCallback& cb) {
+  static void SetMessageCallback(
+    const ConnectionPtr& c, const MessageCallback& cb) {
     c->SetMessageCallback(cb);
   }
 

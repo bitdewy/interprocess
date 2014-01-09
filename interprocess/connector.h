@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -7,17 +7,21 @@
 #ifndef INTERPROCESS_CONNECTOR_H_
 #define INTERPROCESS_CONNECTOR_H_
 
-#include <thread>
+#include <ppltasks.h>
 #include <string>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
 
-class Connector : public noncopyable {
+class Connector {
  public:
   explicit Connector(const std::string& endpoint);
+  Connector(const Connector&) = delete;
+  Connector& operator=(const Connector&) = delete;
   ~Connector();
-  void Start();
+  void Connect();
+  void Establish();
   void Stop();
   void SetNewConnectionCallback(const NewConnectionCallback& cb);
   void SetExceptionCallback(const ExceptionCallback& cb);
@@ -31,7 +35,7 @@ class Connector : public noncopyable {
 
   std::string pipe_name_;
   std::thread connect_thread_;
-  HANDLE close_event_;
+  handle close_event_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
   std::function<void()> async_io_callback_;

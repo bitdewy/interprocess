@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -14,21 +14,24 @@ namespace interprocess {
 Connector::Connector(const std::string& endpoint)
   : pipe_name_(std::string("\\\\.\\pipe\\").append(endpoint)),
     close_event_(CreateEvent(NULL, FALSE, FALSE, NULL)) {
-  assert(close_event_ != NULL);
+  assert(("CreateEvent (close event) failed", close_event_ != NULL));
 }
 
 Connector::~Connector() {
   Stop();
-  CloseHandle(close_event_);
 }
 
-void Connector::Start() {
+void Connector::Connect() {
+}
+
+void Connector::Establish() {
+  // TODO(bitdewy): connect first, then into async read mode
   connect_thread_.swap(
     std::thread(std::bind(&Connector::ConnectInThread, this)));
 }
 
 void Connector::Stop() {
-  SetEvent(close_event_);
+  SetEvent(close_event_.get());
   if (connect_thread_.joinable()) {
     connect_thread_.join();
   }
@@ -99,7 +102,7 @@ void Connector::ConnectInThread() {
 
     call_if_exist(new_connection_callback_, pipe, post_event, send_event);
 
-    HANDLE events[3] = { post_event, send_event, close_event_ };
+    HANDLE events[3] = { post_event, send_event, close_event_.get() };
 
     while (true) {
       auto wait = WaitForMultipleObjectsEx(

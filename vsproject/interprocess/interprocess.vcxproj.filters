@@ -33,6 +33,9 @@
     <ClInclude Include="..\..\interprocess\types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\interprocess\unique_handle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\interprocess\acceptor.cpp">

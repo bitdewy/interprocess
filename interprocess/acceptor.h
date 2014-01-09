@@ -1,4 +1,4 @@
-//  Copyright 2013, bitdewy@gmail.com
+//  Copyright 2014, bitdewy@gmail.com
 //  Distributed under the Boost Software License, Version 1.0.
 //  You may obtain a copy of the License at
 //
@@ -8,16 +8,18 @@
 #define INTERPROCESS_ACCEPTOR_H_
 
 #include <windows.h>
-#include <thread>
 #include <map>
 #include <string>
+#include <thread>
 #include "interprocess/types.h"
 
 namespace interprocess {
 
-class Acceptor : public noncopyable {
+class Acceptor {
  public:
   explicit Acceptor(const std::string& endpoint);
+  Acceptor(const Acceptor&) = delete;
+  Acceptor& operator=(const Acceptor&) = delete;
   ~Acceptor();
   void Listen();
   void Stop();
@@ -35,8 +37,8 @@ class Acceptor : public noncopyable {
   const std::string pipe_name_;
   std::thread listen_thread_;
   std::map<int, std::function<bool()>> pendding_function_map_;
-  HANDLE next_pipe_;
-  HANDLE close_event_;
+  handle next_pipe_;
+  handle close_event_;
   OVERLAPPED connect_overlap_;
   NewConnectionCallback new_connection_callback_;
   ExceptionCallback exception_callback_;
