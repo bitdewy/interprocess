@@ -13,7 +13,8 @@ template <typename T, typename Traits>
 class unique_handle {
   struct bool_struct { int member; };
   using bool_type = int bool_struct::*;
-public:
+
+ public:
   explicit unique_handle(T value = Traits::invalid())
     : value_(value) {}
   unique_handle(unique_handle&& other)
@@ -39,7 +40,8 @@ public:
   operator bool_type() {
     return Traits::invalid() != value_ ? &bool_struct::member : nullptr;
   }
-private:
+
+ private:
   unique_handle(const unique_handle&);
   unique_handle& operator=(const unique_handle&);
   bool operator==(const unique_handle&);
@@ -54,4 +56,4 @@ private:
 
 }  // namespace interprocess
 
-#endif
+#endif  // INTERPROCESS_UNIQUE_HANDLE_H_
