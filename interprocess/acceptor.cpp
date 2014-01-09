@@ -66,7 +66,9 @@ void Acceptor::ListenInThread() {
     SECURITY_CREATE_EVENT(post_event, FALSE, FALSE);
     SECURITY_CREATE_EVENT(send_event, FALSE, FALSE);
 
-    HANDLE events[4] = { conn_event, post_event, send_event, close_event_.get() };
+    HANDLE events[4] = {
+      conn_event, post_event, send_event, close_event_.get()
+    };
     connect_overlap_.hEvent = conn_event;
     bool pendding = CreateConnectInstance();
 
@@ -93,7 +95,11 @@ void Acceptor::ListenInThread() {
           });
         }
         call_if_exist(
-          new_connection_callback_, next_pipe_.get(), post_event, send_event);
+          new_connection_callback_,
+          next_pipe_.get(),
+          post_event,
+          send_event);
+
         pendding = CreateConnectInstance();
         break;
 
@@ -141,7 +147,9 @@ bool Acceptor::CreateConnectInstance() {
     kTimeout,                  // client time-out
     NULL));                    // default security attributes
 
-  raise_exception_if([this]() { return next_pipe_.get() == INVALID_HANDLE_VALUE; });
+  raise_exception_if([this]() {
+    return next_pipe_.get() == INVALID_HANDLE_VALUE;
+  });
 
   // Overlapped ConnectNamedPipe should return zero.
   raise_exception_if([this]() {
