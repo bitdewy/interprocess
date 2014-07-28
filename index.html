@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Interprocess : A Win32 Inter-process Communication (IPC) library" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Interprocess</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/bitdewy/interprocess">View on GitHub</a>
+
+          <h1 id="project_title">Interprocess</h1>
+          <h2 id="project_tagline">A Win32 Inter-process Communication (IPC) library</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/bitdewy/interprocess/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/bitdewy/interprocess/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="interprocess" class="anchor" href="#interprocess"><span class="octicon octicon-link"></span></a>interprocess</h1>
+
+<p>A Win32 Inter-process Communication (IPC) library</p>
+
+<h2>
+<a name="building" class="anchor" href="#building"><span class="octicon octicon-link"></span></a>Building</h2>
+
+<p>open <a href="vsproject/ipc.sln">vsproject/ipc.sln</a> with Visual Studio 2013, and build </p>
+
+<h2>
+<a name="example" class="anchor" href="#example"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<p>Client:</p>
+
+<div class="highlight highlight-cpp"><pre><span class="c1">// client.cc</span>
+<span class="cp">#include &lt;ppltasks.h&gt;</span>
+<span class="cp">#include &lt;algorithm&gt;</span>
+<span class="cp">#include &lt;string&gt;</span>
+<span class="cp">#include "interprocess/client.h"</span>
+<span class="cp">#include "interprocess/connection.h"</span>
+
+<span class="kt">void</span> <span class="nf">OnMessage</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">interprocess</span><span class="o">::</span><span class="n">ConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"[%d]: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">,</span> <span class="n">msg</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">OnException</span><span class="p">(</span><span class="n">interprocess</span><span class="o">::</span><span class="n">Client</span><span class="o">*</span> <span class="n">c</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">exception_ptr</span><span class="o">&amp;</span> <span class="n">eptr</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">try</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">eptr</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">std</span><span class="o">::</span><span class="n">rethrow_exception</span><span class="p">(</span><span class="n">eptr</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="n">c</span><span class="o">-&gt;</span><span class="n">Connection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Send</span><span class="p">(</span><span class="n">c</span><span class="o">-&gt;</span><span class="n">Name</span><span class="p">());</span>
+      <span class="n">c</span><span class="o">-&gt;</span><span class="n">Connection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Send</span><span class="p">(</span><span class="s">"abcdefghijklmnopqrstuvwxyz"</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Caught exception </span><span class="se">\"</span><span class="s">%s</span><span class="se">\"\n</span><span class="s">"</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">());</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">InThread</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">name</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">to_string</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">get_id</span><span class="p">().</span><span class="n">hash</span><span class="p">());</span>
+  <span class="k">auto</span> <span class="n">client</span> <span class="o">=</span> <span class="n">interprocess</span><span class="o">::</span><span class="n">Client</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+  <span class="n">client</span><span class="p">.</span><span class="n">SetMessageCallback</span><span class="p">(</span><span class="n">OnMessage</span><span class="p">);</span>
+  <span class="n">client</span><span class="p">.</span><span class="n">SetExceptionCallback</span><span class="p">(</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">OnException</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">client</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">placeholders</span><span class="o">::</span><span class="n">_1</span><span class="p">));</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">Connect</span><span class="p">(</span><span class="s">"mynamedpipe"</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span> <span class="p">{</span>
+    <span class="k">auto</span> <span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="p">.</span><span class="n">Connection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">TransactMessage</span><span class="p">(</span><span class="s">"async &amp; wait"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"TransactMessage response: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">response</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">Connection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Send</span><span class="p">(</span><span class="n">client</span><span class="p">.</span><span class="n">Name</span><span class="p">());</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">Connection</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Send</span><span class="p">(</span><span class="s">"abcdefghijklmnopqrstuvwxyz"</span><span class="p">);</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">seconds</span><span class="p">(</span><span class="mi">1</span><span class="p">));</span>
+    <span class="n">client</span><span class="p">.</span><span class="n">Stop</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">Concurrency</span><span class="o">::</span><span class="n">task_group</span> <span class="n">tasks</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">count</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">tasks</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">()</span><span class="o">&gt;</span><span class="p">(</span><span class="n">InThread</span><span class="p">));</span>
+  <span class="p">}</span>
+  <span class="n">tasks</span><span class="p">.</span><span class="n">wait</span><span class="p">();</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>Server:</p>
+
+<div class="highlight highlight-cpp"><pre><span class="n">server</span><span class="p">.</span><span class="n">cc</span>
+<span class="cp">#include &lt;thread&gt;</span>
+<span class="cp">#include &lt;string&gt;</span>
+<span class="cp">#include "interprocess/server.h"</span>
+<span class="cp">#include "interprocess/connection.h"</span>
+
+<span class="kt">void</span> <span class="n">OnMessage</span><span class="p">(</span>
+  <span class="k">const</span> <span class="n">interprocess</span><span class="o">::</span><span class="n">ConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">,</span> <span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">msg</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">static</span> <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"[%d]: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">i</span><span class="o">++</span><span class="p">,</span> <span class="n">msg</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+  <span class="n">conn</span><span class="o">-&gt;</span><span class="n">Send</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">server</span> <span class="o">=</span> <span class="n">interprocess</span><span class="o">::</span><span class="n">Server</span><span class="p">(</span><span class="s">"mynamedpipe"</span><span class="p">);</span>
+  <span class="n">server</span><span class="p">.</span><span class="n">SetMessageCallback</span><span class="p">(</span><span class="n">OnMessage</span><span class="p">);</span>
+  <span class="n">server</span><span class="p">.</span><span class="n">Listen</span><span class="p">();</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">this_thread</span><span class="o">::</span><span class="n">sleep_for</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">hours</span><span class="p">(</span><span class="mi">30</span><span class="p">));</span>
+  <span class="n">server</span><span class="p">.</span><span class="n">Broadcast</span><span class="p">(</span><span class="s">"0"</span><span class="p">);</span>
+  <span class="n">server</span><span class="p">.</span><span class="n">Stop</span><span class="p">();</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>Copyright (c) 2014 <a href="mailto:bitdewy@gmail.com">bitdewy@gmail.com</a></p>
+
+<p>Distributed under the Boost Software License, Version 1.0, unless otherwise noted.
+(See accompanying file <a href="LICENSE_1_0.txt">LICENSE_1_0.txt</a> or copy at <a href="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</a>)</p>
+
+<p><em>Note: Excluding Google cpplint.py. The Google cpplint.py license see accompanying file <a href="cpplint/README">cpplint/README</a>.</em></p>
+
+<p><a href="https://bitdeli.com/free" title="Bitdeli Badge"><img src="https://d2weczhvl823v0.cloudfront.net/bitdewy/interprocess/trend.png" alt="Bitdeli Badge"></a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Interprocess maintained by <a href="https://github.com/bitdewy">bitdewy</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
